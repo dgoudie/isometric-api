@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "target": "es2018",
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "outDir": "build",
+    "rootDir": "src",
+    "resolveJsonModule": true,
+    "strict": true,
+    "types": ["node"]
+  },
+  "lib": ["es2018", "esnext.asynciterable"]
+}
