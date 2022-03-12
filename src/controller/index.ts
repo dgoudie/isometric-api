@@ -10,6 +10,7 @@ import cors from 'cors';
 import { getLogger } from 'log4js';
 import { init as initController } from '../controller/controller';
 import { init as initWebSockets } from './ws';
+import { initializeUserDataIfNecessary } from '../repository/initialize-user';
 import jwt from 'jsonwebtoken';
 import ws from 'express-ws';
 
@@ -49,15 +50,6 @@ function setupPreRequestMiddleware(app: express.Application) {
     app.use(cookieParser());
     app.use(express.json());
     app.use((req, res, next) => {
-        const logger = getLogger();
-        logger.addContext('http_client_ip_address', req.ip);
-        Object.entries(req.headers).forEach(([key, value]) =>
-            logger.addContext(`http_request_header_${key}`, value)
-        );
-        logger.info(`Received request to ${decodeURIComponent(req.url)}`);
-        next();
-    });
-    app.use((req, res, next) => {
         let userId: string | undefined;
         if (process.env.NODE_ENV === 'development') {
             userId = process.env.USER_ID;
@@ -67,12 +59,27 @@ function setupPreRequestMiddleware(app: express.Application) {
         } else {
             const authToken = req.cookies.authorization;
             const token = jwt.decode(authToken);
-            if (!token?.sub) {
+            if (!token) {
                 throw new Error('Invalid authorization cookie');
             }
             userId = token.sub as string;
         }
         res.locals.userId = userId;
+        next();
+    });
+    app.use((req, res, next) => {
+        const logger = getLogger();
+        logger.addContext('user_id', res.locals.userId);
+        logger.addContext('http_client_ip_address', req.ip);
+        Object.entries(req.headers).forEach(([key, value]) =>
+            logger.addContext(`http_request_header_${key}`, value)
+        );
+        logger.info(`Received request to ${decodeURIComponent(req.url)}`);
+        next();
+    });
+    app.use(async (req, res, next) => {
+        const userId = res.locals.userId;
+        await initializeUserDataIfNecessary(userId);
         next();
     });
 }
