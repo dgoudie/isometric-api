@@ -9,6 +9,7 @@ const workoutScheduleSchema = new Schema<IWorkoutSchedule>(
         userId: { type: String },
         days: [
             {
+                nickname: String,
                 exercises: {
                     type: [String],
                 },
