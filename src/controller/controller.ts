@@ -9,9 +9,9 @@ import express from 'express';
 
 export function init(app: express.Application) {
     app.get('/api/exercises', (req, res, next) => {
-        const { q, muscleGroup } = req.query;
-        if (typeof q !== 'undefined') {
-            if (typeof q !== 'string') {
+        const { search, muscleGroup } = req.query;
+        if (typeof search !== 'undefined') {
+            if (typeof search !== 'string') {
                 res.status(400).send();
                 return;
             }
@@ -27,7 +27,11 @@ export function init(app: express.Application) {
                 return;
             }
         }
-        getExercises(res.locals.userId, q, muscleGroup as ExerciseMuscleGroup)
+        getExercises(
+            res.locals.userId,
+            search,
+            muscleGroup as ExerciseMuscleGroup
+        )
             .then((exercises) => res.send(exercises))
             .catch((e) => next(e));
     });
