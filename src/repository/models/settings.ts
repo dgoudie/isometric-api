@@ -1,17 +1,18 @@
 import { Model, Schema } from 'mongoose';
 
 import { ISettings } from '@dgoudie/isometric-types';
+import { handleMongooseError } from '../../utils/mongoose-error-middleware';
 import mongoose from 'mongoose';
 
 const settingsSchema = new Schema<ISettings>(
-  {
-    userId: { type: String, required: true },
-  },
-  { timestamps: true }
+    {
+        userId: { type: String },
+    },
+    { timestamps: true }
 );
 
-const Settings =
-  (mongoose.models.Settings as Model<ISettings>) ||
-  mongoose.model('Settings', settingsSchema);
+settingsSchema.post('save', handleMongooseError);
+
+const Settings = mongoose.model('Settings', settingsSchema);
 
 export default Settings;
