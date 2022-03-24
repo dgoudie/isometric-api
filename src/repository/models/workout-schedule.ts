@@ -6,12 +6,13 @@ import mongoose from 'mongoose';
 
 const workoutScheduleSchema = new Schema<IWorkoutSchedule>(
     {
-        userId: { type: String },
+        //@ts-ignore
+        userId: { type: mongoose.Types.ObjectId },
         days: [
             {
                 nickname: String,
                 exercises: {
-                    type: [String],
+                    type: [mongoose.Types.ObjectId],
                 },
             },
         ],

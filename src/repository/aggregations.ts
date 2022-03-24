@@ -1,23 +1,43 @@
-// export const buildBeerOrLiquorBrandsAggregation = (filterText?: string) => {
-//   let pipeline: object[] = [];
-//   if (!!filterText) {
-//     pipeline = [
-//       ...pipeline,
-//       {
-//         $match: { $expr: buildAndQueryForText(filterText, '$nameNormalized') },
-//       },
-//     ];
-//   }
-//   pipeline = [
-//     ...pipeline,
-//     {
-//       $sort: {
-//         nameNormalized: 1,
-//       },
-//     },
-//   ];
-//   return pipeline;
-// };
+export const buildNextDayScheduleAggregation = (nextDayNumber: number) => {
+    let pipeline: object[] = [];
+    pipeline = [
+        {
+            $unwind: {
+                path: '$days',
+                includeArrayIndex: 'dayNumber',
+            },
+        },
+        {
+            $project: {
+                _id: '$days._id',
+                nickname: '$days.nickname',
+                exercises: '$days.exercises',
+                dayNumber: '$dayNumber',
+            },
+        },
+        {
+            $match: {
+                $or: [
+                    {
+                        dayNumber: nextDayNumber,
+                    },
+                    {
+                        dayNumber: 0,
+                    },
+                ],
+            },
+        },
+        {
+            $sort: {
+                dayNumber: -1,
+            },
+        },
+        {
+            $limit: 1,
+        },
+    ];
+    return pipeline;
+};
 
 // export const buildBeerOrLiquorBrandsByTypeAggregation = (
 //   onlyShowInStock: boolean,

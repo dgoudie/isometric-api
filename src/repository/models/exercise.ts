@@ -5,7 +5,7 @@ import { handleMongooseError } from '../../utils/mongoose-error-middleware';
 
 const exerciseSchema = new Schema<IExercise>(
     {
-        userId: String,
+        userId: mongoose.Types.ObjectId,
         name: String,
         breakTimeInSeconds: Number,
         setCount: Number,
