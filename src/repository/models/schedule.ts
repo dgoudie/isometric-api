@@ -1,10 +1,10 @@
-import { ISettings, IWorkoutSchedule } from '@dgoudie/isometric-types';
 import { Model, Schema } from 'mongoose';
 
+import { ISchedule } from '@dgoudie/isometric-types';
 import { handleMongooseError } from '../../utils/mongoose-error-middleware';
 import mongoose from 'mongoose';
 
-const workoutScheduleSchema = new Schema<IWorkoutSchedule>(
+const scheduleSchema = new Schema<ISchedule>(
     {
         //@ts-ignore
         userId: { type: mongoose.Types.ObjectId },
@@ -20,12 +20,8 @@ const workoutScheduleSchema = new Schema<IWorkoutSchedule>(
     { timestamps: true }
 );
 
-workoutScheduleSchema.post('save', handleMongooseError);
+scheduleSchema.post('save', handleMongooseError);
 
-const WorkoutSchedule = mongoose.model(
-    'WorkoutSchedule',
-    workoutScheduleSchema,
-    'schedules'
-);
+const Schedule = mongoose.model('Schedule', scheduleSchema);
 
-export default WorkoutSchedule;
+export default Schedule;

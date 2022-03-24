@@ -1,18 +1,19 @@
 import {
     IExercise,
-    IWorkoutSchedule,
-    IWorkoutScheduleDay,
+    ISchedule,
+    IScheduleDay,
+    IScheduleDayWithExercises,
 } from '@dgoudie/isometric-types';
 
 import { PipelineStage } from 'mongoose';
-import WorkoutSchedule from '../models/workout-schedule';
+import WorkoutSchedule from '../models/schedule';
 import mongoose from 'mongoose';
 
 export function getSchedule(userId: string) {
     return WorkoutSchedule.findOne({ userId });
 }
 
-export function saveSchedule(userId: string, schedule: IWorkoutSchedule) {
+export function saveSchedule(userId: string, schedule: ISchedule) {
     return WorkoutSchedule.updateOne(
         { userId },
         { ...schedule, userId },
@@ -23,9 +24,9 @@ export function saveSchedule(userId: string, schedule: IWorkoutSchedule) {
 export async function getNextDaySchedule(userId: string) {
     // TODO get next day number from workouts collection
 
-    const [day] = await WorkoutSchedule.aggregate<
-        IWorkoutScheduleDay & { exercises: IExercise[] }
-    >(buildNextDayScheduleAggregation(userId, 0));
+    const [day] = await WorkoutSchedule.aggregate<IScheduleDayWithExercises>(
+        buildNextDayScheduleAggregation(userId, 0)
+    );
     return day;
 }
 
@@ -72,9 +73,6 @@ const buildNextDayScheduleAggregation = (userId: string, dayNumber: number) => {
             $limit: 1,
         },
         {
-            $unset: 'dayNumber',
-        },
-        {
             $unwind: {
                 path: '$exercises',
                 includeArrayIndex: 'index',
@@ -100,6 +98,9 @@ const buildNextDayScheduleAggregation = (userId: string, dayNumber: number) => {
                 _id: '$_id',
                 nickname: {
                     $first: '$nickname',
+                },
+                dayNumber: {
+                    $first: '$dayNumber',
                 },
                 exercises: {
                     $push: '$exercises',
