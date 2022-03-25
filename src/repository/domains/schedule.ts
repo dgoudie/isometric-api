@@ -1,13 +1,7 @@
-import {
-    IExercise,
-    ISchedule,
-    IScheduleDay,
-    IScheduleDayWithExercises,
-} from '@dgoudie/isometric-types';
+import { ISchedule, IScheduleDayWithExercises } from '@dgoudie/isometric-types';
+import mongoose, { PipelineStage } from 'mongoose';
 
-import { PipelineStage } from 'mongoose';
 import WorkoutSchedule from '../models/schedule';
-import mongoose from 'mongoose';
 
 export function getSchedule(userId: string) {
     return WorkoutSchedule.findOne({ userId });
@@ -39,6 +33,13 @@ const buildNextDayScheduleAggregation = (userId: string, dayNumber: number) => {
             },
         },
         {
+            $addFields: {
+                dayCount: {
+                    $size: '$days',
+                },
+            },
+        },
+        {
             $unwind: {
                 path: '$days',
                 includeArrayIndex: 'dayNumber',
@@ -49,6 +50,7 @@ const buildNextDayScheduleAggregation = (userId: string, dayNumber: number) => {
                 _id: '$days._id',
                 nickname: '$days.nickname',
                 exercises: '$days.exercises',
+                dayCount: '$dayCount',
                 dayNumber: '$dayNumber',
             },
         },
@@ -101,6 +103,9 @@ const buildNextDayScheduleAggregation = (userId: string, dayNumber: number) => {
                 },
                 dayNumber: {
                     $first: '$dayNumber',
+                },
+                dayCount: {
+                    $first: '$dayCount',
                 },
                 exercises: {
                     $push: '$exercises',
