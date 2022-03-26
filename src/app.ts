@@ -1,7 +1,7 @@
 import { configure, getLogger } from 'log4js';
 
 import { init as initController } from './controller';
-import { init as initRepository } from './repository';
+import { init as initRepository } from './database';
 
 const init = () => {
     getLogger().level = `INFO`;

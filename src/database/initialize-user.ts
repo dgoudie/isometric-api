@@ -524,7 +524,7 @@ const DEFAULT_EXERCISES: Omit<IExercise, 'userId' | '_id'>[] = [
         setCount: 3,
     },
     {
-        name: 'Single-Arm Dumbbell',
+        name: 'Single-Arm Dumbbell Row',
         primaryMuscleGroup: 'lats',
         secondaryMuscleGroups: ['biceps', 'obliques'],
         exerciseType: 'weighted',
@@ -1164,7 +1164,7 @@ const DEFAULT_EXERCISES: Omit<IExercise, 'userId' | '_id'>[] = [
         setCount: 3,
     },
     {
-        name: 'Handing Knee Raise, Ab Station',
+        name: 'Hanging Knee Raise, Ab Station',
         exerciseType: 'rep_based',
         primaryMuscleGroup: 'abs',
         secondaryMuscleGroups: ['forearms'],
@@ -1172,7 +1172,7 @@ const DEFAULT_EXERCISES: Omit<IExercise, 'userId' | '_id'>[] = [
         setCount: 3,
     },
     {
-        name: 'Handing Leg Raise, Ab Station',
+        name: 'Hanging Leg Raise, Ab Station',
         exerciseType: 'rep_based',
         primaryMuscleGroup: 'abs',
         secondaryMuscleGroups: ['forearms'],

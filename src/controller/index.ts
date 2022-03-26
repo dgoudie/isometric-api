@@ -10,7 +10,7 @@ import cors from 'cors';
 import { getLogger } from 'log4js';
 import { init as initController } from '../controller/controller';
 import { init as initWebSockets } from './ws';
-import { initializeUserDataIfNecessary } from '../repository/initialize-user';
+import { initializeUserDataIfNecessary } from '../database/initialize-user';
 import jwt from 'jsonwebtoken';
 import ws from 'express-ws';
 

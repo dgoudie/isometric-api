@@ -2,7 +2,7 @@ import {
     ExerciseMuscleGroup,
     ExerciseMuscleGroups,
 } from '@dgoudie/isometric-types';
-import { getExercise, getExercises } from '../../repository/domains/exercise';
+import { getExercise, getExercises } from '../../database/domains/exercise';
 
 import { ServiceError } from '@dgoudie/service-error';
 import express from 'express';

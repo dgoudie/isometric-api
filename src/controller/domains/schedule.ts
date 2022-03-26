@@ -2,7 +2,7 @@ import {
     getNextDaySchedule,
     getSchedule,
     saveSchedule,
-} from '../../repository/domains/schedule';
+} from '../../database/domains/schedule';
 
 import express from 'express';
 
