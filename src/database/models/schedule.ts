@@ -14,8 +14,10 @@ const scheduleSchema = new Schema<ISchedule>(
                 exercises: {
                     type: [mongoose.Types.ObjectId],
                 },
+                _id: false,
             },
         ],
+        _id: false,
     },
     { timestamps: true }
 );
