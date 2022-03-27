@@ -10,6 +10,7 @@ export function getExercises(
 ) {
     let query: mongoose.FilterQuery<IExercise> = { userId };
     if (!!$search) {
+        $search = $search.replace(/(\w+)/g, '"$1"');
         query = {
             ...query,
             $text: { $search },

@@ -68,13 +68,15 @@ function setupPreRequestMiddleware(app: express.Application) {
         next();
     });
     app.use((req, res, next) => {
-        const logger = getLogger();
-        logger.addContext('user_id', res.locals.userId);
-        logger.addContext('http_client_ip_address', req.ip);
-        Object.entries(req.headers).forEach(([key, value]) =>
-            logger.addContext(`http_request_header_${key}`, value)
-        );
-        logger.info(`Received request to ${decodeURIComponent(req.url)}`);
+        if (req.method !== 'GET') {
+            const logger = getLogger();
+            logger.addContext('user_id', res.locals.userId);
+            logger.addContext('http_client_ip_address', req.ip);
+            Object.entries(req.headers).forEach(([key, value]) =>
+                logger.addContext(`http_request_header_${key}`, value)
+            );
+            logger.info(`Received request to ${decodeURIComponent(req.url)}`);
+        }
         next();
     });
     app.use(async (req, res, next) => {
