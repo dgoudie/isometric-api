@@ -49,7 +49,7 @@ const buildNextDayScheduleAggregation = (userId: string, dayNumber: number) => {
             $project: {
                 _id: '$days._id',
                 nickname: '$days.nickname',
-                exercises: '$days.exercises',
+                exerciseIds: '$days.exerciseIds',
                 dayCount: '$dayCount',
                 dayNumber: '$dayNumber',
             },
@@ -76,20 +76,23 @@ const buildNextDayScheduleAggregation = (userId: string, dayNumber: number) => {
         },
         {
             $unwind: {
-                path: '$exercises',
+                path: '$exerciseIds',
                 includeArrayIndex: 'index',
             },
         },
         {
             $lookup: {
                 from: 'exercises',
-                localField: 'exercises',
+                localField: 'exerciseIds',
                 foreignField: '_id',
                 as: 'exercises',
             },
         },
         {
             $set: {
+                exercisesIds: {
+                    $arrayElemAt: ['$exercisesIds', 0],
+                },
                 exercises: {
                     $arrayElemAt: ['$exercises', 0],
                 },
@@ -109,6 +112,9 @@ const buildNextDayScheduleAggregation = (userId: string, dayNumber: number) => {
                 },
                 exercises: {
                     $push: '$exercises',
+                },
+                exerciseIds: {
+                    $push: '$exerciseIds',
                 },
             },
         },
