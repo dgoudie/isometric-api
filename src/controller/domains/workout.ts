@@ -19,7 +19,7 @@ let wsInstance: ws.Instance;
 
 export const initWorkout = (app: ws.Application, instance: ws.Instance) => {
     wsInstance = instance;
-    app.ws('/workout', function (ws, req) {
+    app.ws('/api/workout/ws', function (ws, req) {
         const userId = getUserId(req);
         //@ts-ignore
         ws.id = userId;
