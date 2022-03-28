@@ -1,9 +1,4 @@
 import express, { CookieOptions } from 'express';
-import {
-    handleNotFound,
-    handleRemainingErrors,
-    translateServiceErrors,
-} from '@dgoudie/service-error';
 
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
@@ -29,8 +24,6 @@ export function init() {
     setupHealthCheck(app);
 
     initController(app, wsInstance);
-
-    setupPostRequestMiddleware(app);
 
     app.listen(process.env.SERVER_PORT, () =>
         getLogger().info(`listening on ${process.env.SERVER_PORT}`)
@@ -84,13 +77,8 @@ function setupPreRequestMiddleware(app: express.Application) {
     });
 }
 
-function setupPostRequestMiddleware(app: express.Application) {
-    app.use(handleNotFound());
-    app.use(handleRemainingErrors());
-    app.use(translateServiceErrors());
-}
 function setupHealthCheck(app: express.Application) {
-    app.get('/healthcheck', (_req, res) => {
+    app.get('/api/healthcheck', (_req, res) => {
         const healthcheck = {
             uptime: process.uptime(),
             message: 'OK',

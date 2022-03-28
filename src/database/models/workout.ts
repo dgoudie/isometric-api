@@ -1,13 +1,11 @@
 import { ISettings, IWorkout } from '@dgoudie/isometric-types';
 import { Model, Schema } from 'mongoose';
 
-import { handleMongooseError } from '../../utils/mongoose-error-middleware';
 import mongoose from 'mongoose';
 
 const workoutSchema = new Schema<IWorkout>(
     {
         userId: mongoose.Types.ObjectId,
-        startedAt: Date,
         endedAt: Date,
         dayNumber: Number,
         nickname: String,
@@ -28,8 +26,6 @@ const workoutSchema = new Schema<IWorkout>(
     },
     { timestamps: true }
 );
-
-workoutSchema.post('save', handleMongooseError);
 
 const Workout = mongoose.model('Workout', workoutSchema);
 

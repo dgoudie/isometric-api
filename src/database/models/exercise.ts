@@ -1,7 +1,6 @@
 import mongoose, { Model, Schema } from 'mongoose';
 
 import { IExercise } from '@dgoudie/isometric-types';
-import { handleMongooseError } from '../../utils/mongoose-error-middleware';
 
 const exerciseSchema = new Schema<IExercise>(
     {
@@ -20,8 +19,6 @@ const exerciseSchema = new Schema<IExercise>(
 );
 
 exerciseSchema.index({ userId: 1, name: 1 }, { unique: true });
-
-exerciseSchema.post('save', handleMongooseError);
 
 const Exercise = mongoose.model('Exercise', exerciseSchema);
 

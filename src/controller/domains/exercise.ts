@@ -4,7 +4,6 @@ import {
 } from '@dgoudie/isometric-types';
 import { getExercise, getExercises } from '../../database/domains/exercise';
 
-import { ServiceError } from '@dgoudie/service-error';
 import express from 'express';
 
 export function initExercise(app: express.Application) {
@@ -41,12 +40,10 @@ export function initExercise(app: express.Application) {
         try {
             const exercise = await getExercise(res.locals.userId, name);
             if (!exercise) {
-                throw new ServiceError(
-                    404,
-                    `Exercise with name '${name}' not found.`
-                );
+                res.status(404).send(`Exercise with name '${name}' not found.`);
+            } else {
+                res.send(exercise);
             }
-            res.send(exercise);
         } catch (e) {
             next(e);
         }

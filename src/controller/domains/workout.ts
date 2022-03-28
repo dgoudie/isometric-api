@@ -32,18 +32,23 @@ export const initWorkout = (app: ws.Application, instance: ws.Instance) => {
     });
 };
 
-const handleMessage = (event: WebSocket.MessageEvent) => {
-    //@ts-ignore
-    const userId = event.target.id;
-    const eventPayload: WSWorkoutUpdate = JSON.parse(event.data as string);
-    if (eventPayload.type === 'START') {
-        startWorkout(userId).then((workout) =>
-            broadcastWorkoutUpdate(userId, workout)
-        );
-    } else if (eventPayload.type === 'END') {
-        endWorkout(userId).then(() => broadcastWorkoutUpdate(userId, null));
-    } else if (eventPayload.type === 'DISCARD') {
-        discardWorkout(userId).then(() => broadcastWorkoutUpdate(userId, null));
+const handleMessage = async (event: WebSocket.MessageEvent) => {
+    try {
+        //@ts-ignore
+        const userId = event.target.id;
+        const eventPayload: WSWorkoutUpdate = JSON.parse(event.data as string);
+        if (eventPayload.type === 'START') {
+            const workout = await startWorkout(userId);
+            broadcastWorkoutUpdate(userId, workout);
+        } else if (eventPayload.type === 'END') {
+            await endWorkout(userId);
+            broadcastWorkoutUpdate(userId, null);
+        } else if (eventPayload.type === 'DISCARD') {
+            await discardWorkout(userId);
+            broadcastWorkoutUpdate(userId, null);
+        }
+    } catch (e) {
+        getLogger().error(e);
     }
 };
 

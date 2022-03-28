@@ -1,7 +1,6 @@
 import { Model, Schema } from 'mongoose';
 
 import { ISchedule } from '@dgoudie/isometric-types';
-import { handleMongooseError } from '../../utils/mongoose-error-middleware';
 import mongoose from 'mongoose';
 
 const scheduleSchema = new Schema<ISchedule>(
@@ -17,8 +16,6 @@ const scheduleSchema = new Schema<ISchedule>(
     },
     { timestamps: true, _id: false }
 );
-
-scheduleSchema.post('save', handleMongooseError);
 
 const Schedule = mongoose.model('Schedule', scheduleSchema);
 
