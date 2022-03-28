@@ -1,5 +1,14 @@
-import { IWorkout, WsBroadcastMessage } from '@dgoudie/isometric-types';
-import { getActiveWorkout, startWorkout } from '../../database/domains/workout';
+import {
+    IWorkout,
+    WSWorkoutUpdate,
+    WsBroadcastMessage,
+} from '@dgoudie/isometric-types';
+import {
+    discardWorkout,
+    endWorkout,
+    getActiveWorkout,
+    startWorkout,
+} from '../../database/domains/workout';
 
 import WebSocket from 'ws';
 import { getLogger } from 'log4js';
@@ -26,10 +35,15 @@ export const initWorkout = (app: ws.Application, instance: ws.Instance) => {
 const handleMessage = (event: WebSocket.MessageEvent) => {
     //@ts-ignore
     const userId = event.target.id;
-    if (event.data === 'START') {
+    const eventPayload: WSWorkoutUpdate = JSON.parse(event.data as string);
+    if (eventPayload.type === 'START') {
         startWorkout(userId).then((workout) =>
             broadcastWorkoutUpdate(userId, workout)
         );
+    } else if (eventPayload.type === 'END') {
+        endWorkout(userId).then(() => broadcastWorkoutUpdate(userId, null));
+    } else if (eventPayload.type === 'DISCARD') {
+        discardWorkout(userId).then(() => broadcastWorkoutUpdate(userId, null));
     }
 };
 

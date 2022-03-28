@@ -2,6 +2,7 @@ import { ISchedule, IScheduleDayWithExercises } from '@dgoudie/isometric-types';
 import mongoose, { PipelineStage } from 'mongoose';
 
 import Schedule from '../models/schedule';
+import { getMostRecentCompletedWorkout } from './workout';
 
 export function getSchedule(userId: string) {
     return Schedule.findOne({ userId });
@@ -16,10 +17,13 @@ export function saveSchedule(userId: string, schedule: ISchedule) {
 }
 
 export async function getNextDaySchedule(userId: string) {
-    // TODO get next day number from workouts collection
-
+    let dayNumber = 0;
+    const lastWorkout = await getMostRecentCompletedWorkout(userId);
+    if (!!lastWorkout) {
+        dayNumber = lastWorkout.dayNumber + 1;
+    }
     const [day] = await Schedule.aggregate<IScheduleDayWithExercises>(
-        buildNextDayScheduleAggregation(userId, 0)
+        buildNextDayScheduleAggregation(userId, dayNumber)
     );
     return day;
 }

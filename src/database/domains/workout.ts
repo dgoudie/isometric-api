@@ -36,3 +36,27 @@ export async function startWorkout(userId: string) {
         exercises: exercisesMapped,
     });
 }
+
+export async function endWorkout(userId: string) {
+    return Workout.updateOne(
+        {
+            userId,
+            endedAt: { $exists: false },
+        },
+        { endedAt: new Date() }
+    );
+}
+
+export async function discardWorkout(userId: string) {
+    return Workout.deleteOne({
+        userId,
+        endedAt: { $exists: false },
+    });
+}
+
+export function getMostRecentCompletedWorkout(userId: string) {
+    return Workout.findOne({
+        userId,
+        endedAt: { $exists: true },
+    }).sort({ startedAt: -1 });
+}
