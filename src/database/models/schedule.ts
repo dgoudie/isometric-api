@@ -6,20 +6,16 @@ import mongoose from 'mongoose';
 
 const scheduleSchema = new Schema<ISchedule>(
     {
-        //@ts-ignore
-        userId: { type: mongoose.Types.ObjectId },
+        userId: mongoose.Types.ObjectId,
         days: [
             {
                 nickname: String,
-                exerciseIds: {
-                    type: [mongoose.Types.ObjectId],
-                },
+                exerciseIds: [mongoose.Types.ObjectId],
                 _id: false,
             },
         ],
-        _id: false,
     },
-    { timestamps: true }
+    { timestamps: true, _id: false }
 );
 
 scheduleSchema.post('save', handleMongooseError);

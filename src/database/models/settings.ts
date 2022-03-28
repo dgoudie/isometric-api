@@ -6,8 +6,7 @@ import mongoose from 'mongoose';
 
 const settingsSchema = new Schema<ISettings>(
     {
-        //@ts-ignore
-        userId: { type: mongoose.Types.ObjectId },
+        userId: mongoose.Types.ObjectId,
     },
     { timestamps: true }
 );
