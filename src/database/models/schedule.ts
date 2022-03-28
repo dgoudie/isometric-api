@@ -11,7 +11,7 @@ const scheduleSchema = new Schema<ISchedule>(
         days: [
             {
                 nickname: String,
-                exercises: {
+                exerciseIds: {
                     type: [mongoose.Types.ObjectId],
                 },
                 _id: false,
