@@ -23,7 +23,7 @@ export async function startWorkout(userId: string) {
 
     const alreadyInProgressWorkout = await Workout.findOne({
         userId,
-        endedAt: { $exists: false },
+        endedAt: undefined,
     });
 
     if (!!alreadyInProgressWorkout) {
@@ -65,7 +65,7 @@ export async function endWorkout(userId: string) {
 export async function discardWorkout(userId: string) {
     return Workout.deleteOne({
         userId,
-        endedAt: { $exists: false },
+        endedAt: undefined,
     });
 }
 
@@ -73,5 +73,5 @@ export function getMostRecentCompletedWorkout(userId: string) {
     return Workout.findOne({
         userId,
         endedAt: { $exists: true },
-    }).sort({ startedAt: -1 });
+    }).sort({ createdAt: -1 });
 }
