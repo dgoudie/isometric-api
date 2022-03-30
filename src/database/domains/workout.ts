@@ -39,11 +39,24 @@ export async function startWorkout(userId: string) {
     });
 }
 
+export async function persistSet(
+    userId: string,
+    exerciseIndex: number,
+    setIndex: number,
+    set: IWorkoutExerciseSet
+) {
+    await Workout.updateOne(
+        { userId, endedAt: undefined },
+        { $set: { [`exercises.${exerciseIndex}.sets.${setIndex}`]: set } }
+    );
+    return getActiveWorkout(userId);
+}
+
 export async function endWorkout(userId: string) {
     return Workout.updateOne(
         {
             userId,
-            endedAt: { $exists: false },
+            endedAt: undefined,
         },
         { endedAt: new Date() }
     );

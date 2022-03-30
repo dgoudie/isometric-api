@@ -7,6 +7,7 @@ import {
     discardWorkout,
     endWorkout,
     getActiveWorkout,
+    persistSet,
     startWorkout,
 } from '../../database/domains/workout';
 
@@ -39,6 +40,14 @@ const handleMessage = async (event: WebSocket.MessageEvent) => {
         const eventPayload: WSWorkoutUpdate = JSON.parse(event.data as string);
         if (eventPayload.type === 'START') {
             const workout = await startWorkout(userId);
+            broadcastWorkoutUpdate(userId, workout);
+        } else if (eventPayload.type === 'PERSIST_SET') {
+            const workout = await persistSet(
+                userId,
+                eventPayload.exerciseIndex,
+                eventPayload.setIndex,
+                eventPayload.set
+            );
             broadcastWorkoutUpdate(userId, workout);
         } else if (eventPayload.type === 'END') {
             await endWorkout(userId);
