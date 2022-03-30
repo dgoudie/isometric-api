@@ -10,11 +10,10 @@ const scheduleSchema = new Schema<ISchedule>(
             {
                 nickname: String,
                 exerciseIds: [mongoose.Types.ObjectId],
-                _id: false,
             },
         ],
     },
-    { timestamps: true, _id: false }
+    { timestamps: true }
 );
 
 const Schedule = mongoose.model('Schedule', scheduleSchema);

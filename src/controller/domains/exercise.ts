@@ -8,7 +8,7 @@ import express from 'express';
 
 export function initExercise(app: express.Application) {
     app.get('/api/exercises', (req, res, next) => {
-        const { search, muscleGroup } = req.query;
+        const { search, muscleGroup, page } = req.query;
         if (typeof search !== 'undefined') {
             if (typeof search !== 'string') {
                 res.status(400).send();
@@ -26,10 +26,17 @@ export function initExercise(app: express.Application) {
                 return;
             }
         }
+        if (typeof page !== 'undefined') {
+            if (typeof page !== 'string' || isNaN(parseInt(page))) {
+                res.status(400).send();
+                return;
+            }
+        }
         getExercises(
             res.locals.userId,
             search,
-            muscleGroup as ExerciseMuscleGroup
+            muscleGroup as ExerciseMuscleGroup,
+            !!page ? parseInt(page) : undefined
         )
             .then((exercises) => res.send(exercises))
             .catch((e) => next(e));

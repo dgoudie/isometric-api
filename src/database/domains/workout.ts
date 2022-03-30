@@ -16,7 +16,9 @@ export async function startWorkout(userId: string) {
 
     let exercisesMapped: IWorkoutExercise[] = exercises.map((exercise) => ({
         exerciseId: exercise._id,
-        sets: new Array(exercise.setCount).fill({}),
+        sets: new Array<IWorkoutExerciseSet>(exercise.setCount).fill({
+            complete: false,
+        }),
     }));
 
     const alreadyInProgressWorkout = await Workout.findOne({
