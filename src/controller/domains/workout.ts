@@ -1,13 +1,9 @@
-import {
-    IWorkout,
-    WSWorkoutUpdate,
-    WsBroadcastMessage,
-} from '@dgoudie/isometric-types';
+import { IWorkout, WSWorkoutUpdate } from '@dgoudie/isometric-types';
 import {
     discardWorkout,
     endWorkout,
     getActiveWorkout,
-    persistSet,
+    persistExercise,
     startWorkout,
 } from '../../database/domains/workout';
 
@@ -41,12 +37,11 @@ const handleMessage = async (event: WebSocket.MessageEvent) => {
         if (eventPayload.type === 'START') {
             const workout = await startWorkout(userId);
             broadcastWorkoutUpdate(userId, workout);
-        } else if (eventPayload.type === 'PERSIST_SET') {
-            const workout = await persistSet(
+        } else if (eventPayload.type === 'PERSIST_EXERCISE') {
+            const workout = await persistExercise(
                 userId,
                 eventPayload.exerciseIndex,
-                eventPayload.setIndex,
-                eventPayload.set
+                eventPayload.exercise
             );
             broadcastWorkoutUpdate(userId, workout);
         } else if (eventPayload.type === 'END') {

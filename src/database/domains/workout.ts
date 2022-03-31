@@ -39,15 +39,15 @@ export async function startWorkout(userId: string) {
     });
 }
 
-export async function persistSet(
+export async function persistExercise(
     userId: string,
     exerciseIndex: number,
-    setIndex: number,
-    set: IWorkoutExerciseSet
+    exercise: IWorkoutExercise
 ) {
+    await normalizeExercise(exercise, exerciseIndex, userId);
     await Workout.updateOne(
         { userId, endedAt: undefined },
-        { $set: { [`exercises.${exerciseIndex}.sets.${setIndex}`]: set } }
+        { $set: { [`exercises.${exerciseIndex}`]: exercise } }
     );
     return getActiveWorkout(userId);
 }
@@ -74,4 +74,57 @@ export function getMostRecentCompletedWorkout(userId: string) {
         userId,
         endedAt: { $exists: true },
     }).sort({ createdAt: -1 });
+}
+
+async function normalizeExercise(
+    exercise: IWorkoutExercise,
+    exerciseIndex: number,
+    userId: string
+) {
+    ensureNoIncompleteSetsBeforeCompleteSets(exercise);
+    await populateResistanceForNextSets(exercise, exerciseIndex, userId);
+}
+function ensureNoIncompleteSetsBeforeCompleteSets(exercise: IWorkoutExercise) {
+    exercise.sets.forEach((set, index) => {
+        if (!set.complete) {
+            let nextSet = exercise.sets[index + 1];
+            nextSet && (nextSet.complete = false);
+        }
+    });
+}
+async function populateResistanceForNextSets(
+    exercise: IWorkoutExercise,
+    exerciseIndex: number,
+    userId: string
+) {
+    let activeWorkout = await getActiveWorkout(userId);
+    if (!activeWorkout) {
+        return;
+    }
+    let exerciseAtIndex = activeWorkout.exercises[exerciseIndex];
+    let anyExercisesAlreadyHaveResistanceSet = !exerciseAtIndex.sets.every(
+        (set) => typeof set.resistanceInPounds === 'undefined'
+    );
+    if (anyExercisesAlreadyHaveResistanceSet) {
+        return;
+    }
+    if (exercise.sets.length < 2) {
+        return;
+    }
+    const firstSetResistance = exercise.sets[0].resistanceInPounds;
+    const everyOtherSetResistanceIsUndefined = exercise.sets
+        .slice(1)
+        .every((set) => typeof set.resistanceInPounds === 'undefined');
+    if (
+        typeof firstSetResistance === 'undefined' ||
+        !everyOtherSetResistanceIsUndefined
+    ) {
+        return;
+    }
+    exercise.sets.forEach((set, index) => {
+        if (index === 0) {
+            return;
+        }
+        set.resistanceInPounds = firstSetResistance;
+    });
 }
