@@ -103,7 +103,7 @@ export const buildFindExercisesWithBasicHistoryQuery = (
             },
           },
           {
-            $limit: 5,
+            $limit: 20,
           },
           {
             $addFields: {

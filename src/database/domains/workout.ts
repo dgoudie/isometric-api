@@ -17,6 +17,10 @@ export async function startWorkout(userId: string) {
     exerciseId: exercise._id,
     sets: new Array<IWorkoutExerciseSet>(exercise.setCount).fill({
       complete: false,
+      timeInSeconds:
+        exercise.exerciseType === 'timed'
+          ? exercise.timePerSetInSeconds
+          : undefined,
     }),
   }));
 
