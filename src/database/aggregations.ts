@@ -73,7 +73,7 @@ export const buildFindExercisesWithBasicHistoryQuery = (
     {
       $lookup: {
         from: 'workouts',
-        as: 'workouts',
+        as: 'instances',
         let: {
           exercise_id: '$_id',
         },
@@ -82,9 +82,30 @@ export const buildFindExercisesWithBasicHistoryQuery = (
             $unwind: '$exercises',
           },
           {
+            $addFields: {
+              'exercises.totalRepsForInstance': {
+                $sum: '$exercises.sets.repetitions',
+              },
+            },
+          },
+          {
+            $unwind: {
+              path: '$exercises.sets',
+              preserveNullAndEmptyArrays: true,
+              includeArrayIndex: 'exercises.sets.setIndex',
+            },
+          },
+          {
             $match: {
               $expr: {
-                $eq: ['$exercises.exerciseId', '$$exercise_id'],
+                $and: [
+                  {
+                    $eq: ['$exercises.exerciseId', '$$exercise_id'],
+                  },
+                  {
+                    $eq: ['$exercises.sets.complete', true],
+                  },
+                ],
               },
             },
           },
@@ -93,69 +114,54 @@ export const buildFindExercisesWithBasicHistoryQuery = (
     },
     {
       $unwind: {
-        path: '$workouts',
+        path: '$instances',
         preserveNullAndEmptyArrays: true,
       },
     },
     {
       $addFields: {
-        'workouts.exercises.totalRepsForSet': {
-          $sum: '$workouts.exercises.sets.repetitions',
-        },
+        'instances.sets': '$instances.exercises.sets',
       },
     },
     {
-      $unwind: {
-        path: '$workouts.exercises.sets',
-        preserveNullAndEmptyArrays: true,
-        includeArrayIndex: 'workouts.exercises.sets.setIndex',
-      },
-    },
-    {
-      $match: {
-        $or: [
-          {
-            'workouts.exercises.exerciseId': {
-              $exists: false,
-            },
-          },
-          {
-            'workouts.exercises.sets.complete': true,
-          },
-        ],
-      },
+      $unset: [
+        'instances.dayNumber',
+        'instances.nickname',
+        'instances.exercises',
+      ],
     },
     {
       $addFields: {
-        'workouts.exercises.sets.workoutStart': '$workouts.createdAt',
-        'workouts.exercises.sortableValue': {
+        'instances.personalBestSortableValue': {
           $cond: [
             {
               $eq: ['$exercise.exerciseType', 'rep_based'],
             },
-            '$workouts.exercises.totalRepsForSet',
-            '$workouts.exercises.sets.resistanceInPounds',
+            '$instances.totalRepsForInstance',
+            '$instances.sets.resistanceInPounds',
           ],
         },
       },
     },
     {
       $sort: {
-        _id: 1,
-        'workouts.exercises.sortableValue': -1,
+        'instances.personalBestSortableValue': -1,
       },
     },
     {
       $group: {
-        _id: '$_id',
+        _id: {
+          exerciseId: '$_id',
+          instanceId: '$instances._id',
+        },
         exerciseRoot: {
           $first: '$$ROOT',
         },
         sets: {
-          $push: '$workouts.exercises.sets',
+          $push: '$instances.sets',
         },
         bestSet: {
-          $first: '$workouts.exercises.sets',
+          $first: '$instances.sets',
         },
       },
     },
@@ -168,10 +174,12 @@ export const buildFindExercisesWithBasicHistoryQuery = (
               bestSet: {
                 $cond: [
                   {
-                    $not: '$bestSet.workoutStart',
+                    $not: {
+                      $eq: ['$bestSet.setIndex', null],
+                    },
                   },
-                  '$$REMOVE',
                   '$bestSet',
+                  '$$REMOVE',
                 ],
               },
               sets: {
@@ -180,40 +188,131 @@ export const buildFindExercisesWithBasicHistoryQuery = (
                   as: 'set',
                   cond: {
                     $not: {
-                      $not: '$$set.workoutStart',
+                      $eq: ['$$set.setIndex', null],
                     },
                   },
                 },
-              },
-              lastPerformed: {
-                $max: '$exerciseRoot.workouts.exercises.sets.workoutStart',
               },
             },
           ],
         },
       },
     },
-    { $unset: 'workouts' },
     {
-      $unwind: {
-        path: '$sets',
-        preserveNullAndEmptyArrays: true,
+      $addFields: {
+        'instances.sets': {
+          $cond: [
+            {
+              $gt: [
+                {
+                  $size: '$sets',
+                },
+                0,
+              ],
+            },
+            '$sets',
+            '$$REMOVE',
+          ],
+        },
+        'instances.bestSet': '$bestSet',
       },
     },
     {
+      $unset: ['sets', 'bestSet'],
+    },
+    {
       $sort: {
-        'sets.workoutStart': 1,
-        'sets.setIndex': 1,
+        'instances.personalBestSortableValue': -1,
       },
     },
     {
       $group: {
         _id: '$_id',
+        exerciseRoot: {
+          $first: '$$ROOT',
+        },
+        instances: {
+          $push: '$instances',
+        },
+        bestInstance: {
+          $first: '$instances',
+        },
+        bestSet: {
+          $first: '$instances.bestSet',
+        },
+      },
+    },
+    {
+      $replaceRoot: {
+        newRoot: {
+          $mergeObjects: [
+            '$exerciseRoot',
+            {
+              instances: {
+                $filter: {
+                  input: '$instances',
+                  as: 'instance',
+                  cond: {
+                    $not: {
+                      $not: '$$instance._id',
+                    },
+                  },
+                },
+              },
+              bestInstance: {
+                $cond: [
+                  {
+                    $not: '$bestInstance._id',
+                  },
+                  '$$REMOVE',
+                  '$bestInstance',
+                ],
+              },
+              bestSet: {
+                $cond: [
+                  {
+                    $eq: ['$bestSet', null],
+                  },
+                  '$$REMOVE',
+                  '$bestSet',
+                ],
+              },
+              lastPerformed: {
+                $max: '$instances.createdAt',
+              },
+            },
+          ],
+        },
+      },
+    },
+    {
+      $unwind: {
+        path: '$instances',
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+    {
+      $unwind: {
+        path: '$instances.sets',
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+    {
+      $sort: {
+        'instances.sets.setIndex': 1,
+      },
+    },
+    {
+      $group: {
+        _id: {
+          exerciseId: '$_id',
+          instanceId: '$instances._id',
+        },
         _: {
           $first: '$$ROOT',
         },
         sets: {
-          $push: '$sets',
+          $push: '$instances.sets',
         },
       },
     },
@@ -228,6 +327,65 @@ export const buildFindExercisesWithBasicHistoryQuery = (
           ],
         },
       },
+    },
+    {
+      $addFields: {
+        'instances.sets': {
+          $cond: [
+            {
+              $gt: [
+                {
+                  $size: '$sets',
+                },
+                0,
+              ],
+            },
+            '$sets',
+            '$$REMOVE',
+          ],
+        },
+      },
+    },
+    {
+      $sort: {
+        'instances.createdAt': -1,
+      },
+    },
+    {
+      $group: {
+        _id: '$_id',
+        _: {
+          $first: '$$ROOT',
+        },
+        instances: {
+          $push: '$instances',
+        },
+      },
+    },
+    {
+      $replaceRoot: {
+        newRoot: {
+          $mergeObjects: [
+            '$_',
+            {
+              instances: {
+                $filter: {
+                  input: '$instances',
+                  as: 'instance',
+                  cond: {
+                    $not: {
+                      $not: '$$instance._id',
+                    },
+                  },
+                },
+              },
+            },
+          ],
+        },
+      },
+    },
+    {
+      $unset: 'sets',
     },
     {
       $sort: {

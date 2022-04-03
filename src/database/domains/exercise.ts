@@ -2,7 +2,6 @@ import { ExerciseMuscleGroup, IExercise } from '@dgoudie/isometric-types';
 
 import Exercise from '../models/exercise';
 import { buildFindExercisesWithBasicHistoryQuery } from '../aggregations';
-import mongoose from 'mongoose';
 
 export function getExercises(
   userId: string,
