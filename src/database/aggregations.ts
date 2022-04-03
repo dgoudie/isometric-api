@@ -82,6 +82,30 @@ export const buildFindExercisesWithBasicHistoryQuery = (
             $unwind: '$exercises',
           },
           {
+            $match: {
+              $expr: {
+                $and: [
+                  {
+                    $not: {
+                      $not: '$endedAt',
+                    },
+                  },
+                  {
+                    $eq: ['$exercises.exerciseId', '$$exercise_id'],
+                  },
+                ],
+              },
+            },
+          },
+          {
+            $sort: {
+              createdAt: -1,
+            },
+          },
+          {
+            $limit: 5,
+          },
+          {
             $addFields: {
               'exercises.totalRepsForInstance': {
                 $sum: '$exercises.sets.repetitions',
@@ -98,14 +122,7 @@ export const buildFindExercisesWithBasicHistoryQuery = (
           {
             $match: {
               $expr: {
-                $and: [
-                  {
-                    $eq: ['$exercises.exerciseId', '$$exercise_id'],
-                  },
-                  {
-                    $eq: ['$exercises.sets.complete', true],
-                  },
-                ],
+                $eq: ['$exercises.sets.complete', true],
               },
             },
           },
