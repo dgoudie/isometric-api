@@ -1,11 +1,13 @@
 import { IWorkout, WSWorkoutUpdate } from '@dgoudie/isometric-types';
 import {
+  addCheckInToActiveExercise,
   discardWorkout,
   endWorkout,
   getActiveWorkout,
   persistSetComplete,
   persistSetRepetitions,
   persistSetResistance,
+  replaceExercise,
   startWorkout,
 } from '../../database/domains/workout';
 
@@ -24,7 +26,7 @@ export const initWorkout = (app: ws.Application, instance: ws.Instance) => {
     ws.id = userId;
 
     ws.onmessage = handleMessage;
-
+    addCheckInToActiveExercise(userId);
     getActiveWorkout(userId).then((workout) => {
       ws.send(JSON.stringify(workout));
     });
@@ -36,9 +38,16 @@ const handleMessage = async (event: WebSocket.MessageEvent) => {
     //@ts-ignore
     const userId = event.target.id;
     const eventPayload: WSWorkoutUpdate = JSON.parse(event.data as string);
+    addCheckInToActiveExercise(userId);
     if (eventPayload.type === 'START') {
       const workout = await startWorkout(userId);
       broadcastWorkoutUpdate(userId, workout);
+    } else if (eventPayload.type === 'END') {
+      await endWorkout(userId);
+      broadcastWorkoutUpdate(userId, null);
+    } else if (eventPayload.type === 'DISCARD') {
+      await discardWorkout(userId);
+      broadcastWorkoutUpdate(userId, null);
     } else if (eventPayload.type === 'PERSIST_SET_COMPLETE') {
       const workout = await persistSetComplete(
         userId,
@@ -63,12 +72,15 @@ const handleMessage = async (event: WebSocket.MessageEvent) => {
         eventPayload.resistanceInPounds
       );
       broadcastWorkoutUpdate(userId, workout);
-    } else if (eventPayload.type === 'END') {
-      await endWorkout(userId);
-      broadcastWorkoutUpdate(userId, null);
-    } else if (eventPayload.type === 'DISCARD') {
-      await discardWorkout(userId);
-      broadcastWorkoutUpdate(userId, null);
+    } else if (eventPayload.type === 'REPLACE_EXERCISE') {
+      const workout = await replaceExercise(
+        userId,
+        eventPayload.exerciseIndex,
+        eventPayload.newExerciseId
+      );
+      if (!!workout) {
+        broadcastWorkoutUpdate(userId, workout);
+      }
     }
   } catch (e) {
     getLogger().error(e);

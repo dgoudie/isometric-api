@@ -9,6 +9,8 @@ const workoutSchema = new Schema<IWorkout>(
     endedAt: Date,
     dayNumber: Number,
     nickname: String,
+    checkIns: [Date],
+    durationInSeconds: Number,
     exercises: [
       {
         exerciseId: mongoose.Types.ObjectId,

@@ -13,7 +13,7 @@
         "prod": "node build/app"
     },
     "dependencies": {
-        "@dgoudie/isometric-types": "^1.0.19",
+        "@dgoudie/isometric-types": "^1.0.20",
         "@log4js-node/logstash-http": "^1.1.0",
         "cookie-parser": "^1.4.6",
         "cors": "^2.8.5",

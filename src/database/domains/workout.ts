@@ -1,28 +1,91 @@
 import {
+  IExercise,
+  IWorkout,
   IWorkoutExercise,
   IWorkoutExerciseSet,
 } from '@dgoudie/isometric-types';
+import {
+  differenceInMilliseconds,
+  differenceInMinutes,
+  intervalToDuration,
+  millisecondsToSeconds,
+  minutesToMilliseconds,
+} from 'date-fns';
+import { getExerciseById, getExerciseByName } from './exercise';
 
+import { PipelineStage } from 'mongoose';
 import Workout from '../models/workout';
 import { getNextDaySchedule } from './schedule';
+import mongoose from 'mongoose';
 
-export function getActiveWorkout(userId: string) {
-  return Workout.findOne({ userId, endedAt: undefined });
+export async function getActiveWorkout(
+  userId: string,
+  excludeCheckIns = true
+): Promise<IWorkout> {
+  let pipeline: PipelineStage[] = [
+    {
+      $match: {
+        userId: new mongoose.Types.ObjectId(userId),
+        endedAt: undefined,
+      },
+    },
+    {
+      $unwind: {
+        path: '$checkIns',
+      },
+    },
+    {
+      $sort: {
+        checkIns: 1,
+      },
+    },
+    {
+      $group: {
+        _id: '$_id',
+        root: {
+          $first: '$$ROOT',
+        },
+        checkIns: {
+          $push: '$checkIns',
+        },
+      },
+    },
+    {
+      $replaceRoot: {
+        newRoot: {
+          $mergeObjects: [
+            '$root',
+            {
+              checkIns: '$checkIns',
+            },
+          ],
+        },
+      },
+    },
+    { $limit: 1 },
+  ];
+  if (excludeCheckIns) {
+    pipeline.push({ $unset: 'checkIns' });
+  }
+  const [result] = await Workout.aggregate(pipeline);
+  return result ?? null;
+}
+
+export async function addCheckInToActiveExercise(userId: string) {
+  Workout.updateOne(
+    { userId, endedAt: undefined },
+    {
+      $push: { checkIns: new Date() },
+    }
+  ).exec();
 }
 
 export async function startWorkout(userId: string) {
   const { nickname, dayNumber, exercises } = await getNextDaySchedule(userId);
 
-  let exercisesMapped: IWorkoutExercise[] = exercises.map((exercise) => ({
-    exerciseId: exercise._id,
-    sets: new Array<IWorkoutExerciseSet>(exercise.setCount).fill({
-      complete: false,
-      timeInSeconds:
-        exercise.exerciseType === 'timed'
-          ? exercise.timePerSetInSeconds
-          : undefined,
-    }),
-  }));
+  let exercisesMapped: IWorkoutExercise[] = exercises.map(
+    mapExerciseToInstance
+  );
 
   const alreadyInProgressWorkout = await Workout.findOne({
     userId,
@@ -39,6 +102,7 @@ export async function startWorkout(userId: string) {
     dayNumber,
     nickname,
     exercises: exercisesMapped,
+    checkIns: [new Date()],
   });
 }
 
@@ -97,13 +161,54 @@ export async function persistSetResistance(
   return getActiveWorkout(userId);
 }
 
+export async function replaceExercise(
+  userId: string,
+  exerciseIndex: number,
+  newExerciseId: string
+) {
+  const newExercise = await getExerciseById(userId, newExerciseId);
+  if (!newExercise) {
+    return;
+  }
+  const workoutExerciseMapped = mapExerciseToInstance(newExercise);
+  await Workout.updateOne(
+    { userId, endedAt: undefined },
+    { [`exercises.${exerciseIndex}`]: workoutExerciseMapped }
+  );
+  return getActiveWorkout(userId);
+}
+
 export async function endWorkout(userId: string) {
+  const activeWorkout = await getActiveWorkout(userId, false);
+  if (!activeWorkout) {
+    return;
+  }
+  const checkIns = [...activeWorkout.checkIns!, new Date()];
+  let durationInMilliseconds = 0;
+  for (let index = 0; index < checkIns.length - 1; index++) {
+    const checkIn = checkIns[index];
+    const nextCheckIn = checkIns[index + 1];
+    let durationBetweenCheckIns = differenceInMilliseconds(
+      new Date(nextCheckIn),
+      new Date(checkIn)
+    );
+    durationInMilliseconds += Math.min(
+      durationBetweenCheckIns,
+      minutesToMilliseconds(30)
+    );
+  }
+  const durationInSeconds = millisecondsToSeconds(durationInMilliseconds);
   return Workout.updateOne(
     {
       userId,
       endedAt: undefined,
     },
-    { endedAt: new Date() }
+    [
+      {
+        $addFields: { endedAt: new Date(), durationInSeconds },
+      },
+      { $unset: 'checkIns' },
+    ]
   );
 }
 
@@ -119,6 +224,19 @@ export function getMostRecentCompletedWorkout(userId: string) {
     userId,
     endedAt: { $exists: true },
   }).sort({ createdAt: -1 });
+}
+
+function mapExerciseToInstance(exercise: IExercise): IWorkoutExercise {
+  return {
+    exerciseId: exercise._id,
+    sets: new Array<IWorkoutExerciseSet>(exercise.setCount).fill({
+      complete: false,
+      timeInSeconds:
+        exercise.exerciseType === 'timed'
+          ? exercise.timePerSetInSeconds
+          : undefined,
+    }),
+  };
 }
 
 async function ensureNoIncompleteSetsBeforeCompleteSets(

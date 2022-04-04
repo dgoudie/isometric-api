@@ -17,7 +17,10 @@ export function getExercises(
   );
   return Exercise.aggregate(pipeline);
 }
+export function getExerciseById(userId: string, _id: string) {
+  return Exercise.findOne({ userId, _id });
+}
 
-export function getExercise(userId: string, name: string) {
+export function getExerciseByName(userId: string, name: string) {
   return Exercise.findOne({ userId, name });
 }
