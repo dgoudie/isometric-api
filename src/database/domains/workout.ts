@@ -6,8 +6,6 @@ import {
 } from '@dgoudie/isometric-types';
 import {
   differenceInMilliseconds,
-  differenceInMinutes,
-  intervalToDuration,
   millisecondsToSeconds,
   minutesToMilliseconds,
 } from 'date-fns';
@@ -18,10 +16,15 @@ import Workout from '../models/workout';
 import { getNextDaySchedule } from './schedule';
 import mongoose from 'mongoose';
 
-export async function getActiveWorkout(
-  userId: string,
-  excludeCheckIns = true
-): Promise<IWorkout> {
+export async function getMinifiedActiveWorkout(
+  userId: string
+): Promise<Partial<IWorkout> | null> {
+  return Workout.findOne({ userId, endedAt: undefined }, 'exercises');
+}
+
+export async function getFullActiveWorkout(
+  userId: string
+): Promise<IWorkout | null> {
   let pipeline: PipelineStage[] = [
     {
       $match: {
@@ -64,9 +67,6 @@ export async function getActiveWorkout(
     },
     { $limit: 1 },
   ];
-  if (excludeCheckIns) {
-    pipeline.push({ $unset: 'checkIns' });
-  }
   const [result] = await Workout.aggregate(pipeline);
   return result ?? null;
 }
@@ -96,7 +96,7 @@ export async function startWorkout(userId: string) {
     return alreadyInProgressWorkout;
   }
 
-  return Workout.create({
+  await Workout.create({
     userId,
     startedAt: new Date(),
     dayNumber,
@@ -104,6 +104,7 @@ export async function startWorkout(userId: string) {
     exercises: exercisesMapped,
     checkIns: [new Date()],
   });
+  return getMinifiedActiveWorkout(userId);
 }
 
 export async function persistSetComplete(
@@ -121,7 +122,7 @@ export async function persistSetComplete(
     }
   );
   await ensureNoIncompleteSetsBeforeCompleteSets(userId, exerciseIndex);
-  return getActiveWorkout(userId);
+  return getMinifiedActiveWorkout(userId);
 }
 
 export async function persistSetRepetitions(
@@ -139,7 +140,7 @@ export async function persistSetRepetitions(
       },
     }
   );
-  return getActiveWorkout(userId);
+  return getMinifiedActiveWorkout(userId);
 }
 
 export async function persistSetResistance(
@@ -158,7 +159,7 @@ export async function persistSetResistance(
     }
   );
   await populateResistanceForNextSets(userId, exerciseIndex, setIndex);
-  return getActiveWorkout(userId);
+  return getMinifiedActiveWorkout(userId);
 }
 
 export async function replaceExercise(
@@ -175,11 +176,11 @@ export async function replaceExercise(
     { userId, endedAt: undefined },
     { [`exercises.${exerciseIndex}`]: workoutExerciseMapped }
   );
-  return getActiveWorkout(userId);
+  return getMinifiedActiveWorkout(userId);
 }
 
 export async function endWorkout(userId: string) {
-  const activeWorkout = await getActiveWorkout(userId, false);
+  const activeWorkout = await getFullActiveWorkout(userId);
   if (!activeWorkout) {
     return;
   }
@@ -243,7 +244,7 @@ async function ensureNoIncompleteSetsBeforeCompleteSets(
   userId: string,
   exerciseIndex: number
 ) {
-  let activeWorkout = await getActiveWorkout(userId);
+  let activeWorkout = await getFullActiveWorkout(userId);
   if (!activeWorkout) {
     return;
   }
@@ -276,7 +277,7 @@ async function populateResistanceForNextSets(
   if (setIndex !== 0) {
     return;
   }
-  let activeWorkout = await getActiveWorkout(userId);
+  let activeWorkout = await getFullActiveWorkout(userId);
   if (!activeWorkout) {
     return;
   }

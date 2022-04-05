@@ -3,7 +3,8 @@ import {
   addCheckInToActiveExercise,
   discardWorkout,
   endWorkout,
-  getActiveWorkout,
+  getFullActiveWorkout,
+  getMinifiedActiveWorkout,
   persistSetComplete,
   persistSetRepetitions,
   persistSetResistance,
@@ -27,7 +28,7 @@ export const initWorkout = (app: ws.Application, instance: ws.Instance) => {
 
     ws.onmessage = handleMessage;
     addCheckInToActiveExercise(userId);
-    getActiveWorkout(userId).then((workout) => {
+    getMinifiedActiveWorkout(userId).then((workout) => {
       ws.send(JSON.stringify(workout));
     });
   });
@@ -89,7 +90,7 @@ const handleMessage = async (event: WebSocket.MessageEvent) => {
 
 export const broadcastWorkoutUpdate = (
   userId: string,
-  workout: IWorkout | null
+  workout: Partial<IWorkout> | null
 ) =>
   Array.from(wsInstance.getWss().clients)
     //@ts-ignore
