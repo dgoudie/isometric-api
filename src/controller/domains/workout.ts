@@ -3,6 +3,7 @@ import {
   addCheckInToActiveExercise,
   discardWorkout,
   endWorkout,
+  getCompletedWorkouts,
   getFullActiveWorkout,
   getMinifiedActiveWorkout,
   persistSetComplete,
@@ -31,6 +32,25 @@ export const initWorkout = (app: ws.Application, instance: ws.Instance) => {
     getMinifiedActiveWorkout(userId).then((workout) => {
       ws.send(JSON.stringify(workout));
     });
+  });
+
+  app.get('/api/workouts', async (req, res, next) => {
+    const { page } = req.query;
+    if (typeof page !== 'undefined') {
+      if (typeof page !== 'string' || isNaN(parseInt(page))) {
+        res.status(400).send();
+        return;
+      }
+    }
+    try {
+      const workouts = await getCompletedWorkouts(
+        res.locals.userId,
+        !!page ? parseInt(page) : undefined
+      );
+      res.send(workouts);
+    } catch (e) {
+      next(e);
+    }
   });
 };
 

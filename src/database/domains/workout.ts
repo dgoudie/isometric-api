@@ -16,6 +16,16 @@ import Workout from '../models/workout';
 import { getNextDaySchedule } from './schedule';
 import mongoose from 'mongoose';
 
+export async function getCompletedWorkouts(userId: string, page?: number) {
+  let query = Workout.find({ userId, endedAt: { $exists: true } }).sort({
+    createdAt: -1,
+  });
+  if (typeof page !== 'undefined') {
+    query = query.limit(10).skip((page - 1) * 10);
+  }
+  return query.exec();
+}
+
 export async function getMinifiedActiveWorkout(
   userId: string
 ): Promise<Partial<IWorkout> | null> {
@@ -229,6 +239,7 @@ export function getMostRecentCompletedWorkout(userId: string) {
 
 function mapExerciseToInstance(exercise: IExercise): IWorkoutExercise {
   return {
+    _id: new mongoose.Types.ObjectId().toString(),
     exerciseId: exercise._id,
     sets: new Array<IWorkoutExerciseSet>(exercise.setCount).fill({
       complete: false,
