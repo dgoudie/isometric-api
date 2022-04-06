@@ -7,13 +7,15 @@ export function getExercises(
   userId: string,
   $search?: string,
   muscleGroup?: ExerciseMuscleGroup,
-  page?: number
+  page?: number,
+  ids?: string[]
 ) {
   const pipeline = buildFindExercisesWithBasicHistoryQuery(
     userId,
     $search,
     muscleGroup,
-    page
+    page,
+    ids
   );
   return Exercise.aggregate(pipeline);
 }

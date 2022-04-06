@@ -239,8 +239,7 @@ export function getMostRecentCompletedWorkout(userId: string) {
 
 function mapExerciseToInstance(exercise: IExercise): IWorkoutExercise {
   return {
-    _id: new mongoose.Types.ObjectId().toString(),
-    exerciseId: exercise._id,
+    exercise,
     sets: new Array<IWorkoutExerciseSet>(exercise.setCount).fill({
       complete: false,
       timeInSeconds:

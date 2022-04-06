@@ -47,7 +47,8 @@ export const buildFindExercisesWithBasicHistoryQuery = (
   userId: string,
   $search?: string,
   muscleGroup?: ExerciseMuscleGroup,
-  page?: number
+  page?: number,
+  ids?: string[]
 ) => {
   let query: object = { userId: new mongoose.Types.ObjectId(userId) };
   if (!!$search) {
@@ -64,6 +65,14 @@ export const buildFindExercisesWithBasicHistoryQuery = (
         { primaryMuscleGroup: muscleGroup },
         { secondaryMuscleGroups: muscleGroup },
       ],
+    };
+  }
+  if (!!ids) {
+    query = {
+      ...query,
+      _id: {
+        $in: ids.map((id) => new mongoose.Types.ObjectId(id)),
+      },
     };
   }
   let pipeline: PipelineStage[] = [
@@ -91,7 +100,7 @@ export const buildFindExercisesWithBasicHistoryQuery = (
                     },
                   },
                   {
-                    $eq: ['$exercises.exerciseId', '$$exercise_id'],
+                    $eq: ['$exercises.exercise._id', '$$exercise_id'],
                   },
                 ],
               },
