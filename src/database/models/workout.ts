@@ -13,7 +13,11 @@ const workoutSchema = new Schema<IWorkout>(
     durationInSeconds: Number,
     exercises: [
       {
-        exercise: mongoose.SchemaTypes.Mixed,
+        exercise: {
+          _id: mongoose.Types.ObjectId,
+          name: String,
+          primaryMuscleGroup: String,
+        },
         sets: [
           {
             resistanceInPounds: Number,
