@@ -16,6 +16,7 @@ const workoutSchema = new Schema<IWorkout>(
         exercise: {
           _id: mongoose.Types.ObjectId,
           name: String,
+          exerciseType: String,
           primaryMuscleGroup: String,
         },
         sets: [
