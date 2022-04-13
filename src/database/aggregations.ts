@@ -147,6 +147,8 @@ export const buildFindExercisesWithBasicHistoryQuery = (
     {
       $addFields: {
         'instances.sets': '$instances.exercises.sets',
+        'instances.totalRepsForInstance':
+          '$instances.exercises.totalRepsForInstance',
       },
     },
     {

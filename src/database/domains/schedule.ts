@@ -5,123 +5,123 @@ import Schedule from '../models/schedule';
 import { getMostRecentCompletedWorkout } from './workout';
 
 export function getSchedule(userId: string) {
-    return Schedule.findOne({ userId });
+  return Schedule.findOne({ userId });
 }
 
 export function saveSchedule(userId: string, schedule: ISchedule) {
-    return Schedule.updateOne(
-        { userId },
-        { ...schedule, userId },
-        { upsert: true }
-    );
+  return Schedule.updateOne(
+    { userId },
+    { ...schedule, userId },
+    { upsert: true }
+  );
 }
 
 export async function getNextDaySchedule(userId: string) {
-    let dayNumber = 0;
-    const lastWorkout = await getMostRecentCompletedWorkout(userId);
-    if (!!lastWorkout) {
-        dayNumber = lastWorkout.dayNumber + 1;
-    }
-    const [day] = await Schedule.aggregate<IScheduleDayWithExercises>(
-        buildNextDayScheduleAggregation(userId, dayNumber)
-    );
-    return day;
+  let dayNumber = 0;
+  const lastWorkout = await getMostRecentCompletedWorkout(userId);
+  if (!!lastWorkout) {
+    dayNumber = lastWorkout.dayNumber + 1;
+  }
+  const [day] = await Schedule.aggregate<IScheduleDayWithExercises>(
+    buildNextDayScheduleAggregation(userId, dayNumber)
+  );
+  return day;
 }
 
 const buildNextDayScheduleAggregation = (userId: string, dayNumber: number) => {
-    let pipeline: PipelineStage[] = [];
-    pipeline = [
-        {
-            $match: {
-                userId: new mongoose.Types.ObjectId(userId),
-            },
+  let pipeline: PipelineStage[] = [];
+  pipeline = [
+    {
+      $match: {
+        userId: new mongoose.Types.ObjectId(userId),
+      },
+    },
+    {
+      $addFields: {
+        dayCount: {
+          $size: '$days',
         },
-        {
-            $addFields: {
-                dayCount: {
-                    $size: '$days',
-                },
-            },
+      },
+    },
+    {
+      $unwind: {
+        path: '$days',
+        includeArrayIndex: 'dayNumber',
+      },
+    },
+    {
+      $project: {
+        _id: '$days._id',
+        nickname: '$days.nickname',
+        exerciseIds: '$days.exerciseIds',
+        dayCount: '$dayCount',
+        dayNumber: '$dayNumber',
+      },
+    },
+    {
+      $match: {
+        $or: [
+          {
+            dayNumber,
+          },
+          {
+            dayNumber: 0,
+          },
+        ],
+      },
+    },
+    {
+      $sort: {
+        dayNumber: -1,
+      },
+    },
+    {
+      $limit: 1,
+    },
+    {
+      $unwind: {
+        path: '$exerciseIds',
+        includeArrayIndex: 'index',
+      },
+    },
+    {
+      $lookup: {
+        from: 'exercises',
+        localField: 'exerciseIds',
+        foreignField: '_id',
+        as: 'exercises',
+      },
+    },
+    {
+      $set: {
+        exercisesIds: {
+          $arrayElemAt: ['$exercisesIds', 0],
         },
-        {
-            $unwind: {
-                path: '$days',
-                includeArrayIndex: 'dayNumber',
-            },
+        exercises: {
+          $arrayElemAt: ['$exercises', 0],
         },
-        {
-            $project: {
-                _id: '$days._id',
-                nickname: '$days.nickname',
-                exerciseIds: '$days.exerciseIds',
-                dayCount: '$dayCount',
-                dayNumber: '$dayNumber',
-            },
+      },
+    },
+    {
+      $group: {
+        _id: '$_id',
+        nickname: {
+          $first: '$nickname',
         },
-        {
-            $match: {
-                $or: [
-                    {
-                        dayNumber,
-                    },
-                    {
-                        dayNumber: 0,
-                    },
-                ],
-            },
+        dayNumber: {
+          $first: '$dayNumber',
         },
-        {
-            $sort: {
-                dayNumber: -1,
-            },
+        dayCount: {
+          $first: '$dayCount',
         },
-        {
-            $limit: 1,
+        exercises: {
+          $push: '$exercises',
         },
-        {
-            $unwind: {
-                path: '$exerciseIds',
-                includeArrayIndex: 'index',
-            },
+        exerciseIds: {
+          $push: '$exerciseIds',
         },
-        {
-            $lookup: {
-                from: 'exercises',
-                localField: 'exerciseIds',
-                foreignField: '_id',
-                as: 'exercises',
-            },
-        },
-        {
-            $set: {
-                exercisesIds: {
-                    $arrayElemAt: ['$exercisesIds', 0],
-                },
-                exercises: {
-                    $arrayElemAt: ['$exercises', 0],
-                },
-            },
-        },
-        {
-            $group: {
-                _id: '$_id',
-                nickname: {
-                    $first: '$nickname',
-                },
-                dayNumber: {
-                    $first: '$dayNumber',
-                },
-                dayCount: {
-                    $first: '$dayCount',
-                },
-                exercises: {
-                    $push: '$exercises',
-                },
-                exerciseIds: {
-                    $push: '$exerciseIds',
-                },
-            },
-        },
-    ];
-    return pipeline;
+      },
+    },
+  ];
+  return pipeline;
 };
