@@ -13,12 +13,11 @@ const workoutSchema = new Schema<IWorkout>(
     durationInSeconds: Number,
     exercises: [
       {
-        exercise: {
-          _id: mongoose.Types.ObjectId,
-          name: String,
-          exerciseType: String,
-          primaryMuscleGroup: String,
-        },
+        _id: mongoose.Types.ObjectId,
+        name: String,
+        exerciseType: String,
+        primaryMuscleGroup: String,
+        performedAt: Date,
         sets: [
           {
             resistanceInPounds: Number,
@@ -28,7 +27,6 @@ const workoutSchema = new Schema<IWorkout>(
             _id: false,
           },
         ],
-        _id: false,
       },
     ],
   },

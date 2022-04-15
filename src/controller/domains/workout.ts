@@ -6,6 +6,7 @@ import {
   getCompletedWorkouts,
   getFullActiveWorkout,
   getMinifiedActiveWorkout,
+  getWorkoutInstancesByExerciseName,
   persistSetComplete,
   persistSetRepetitions,
   persistSetResistance,
@@ -48,6 +49,31 @@ export const initWorkout = (app: ws.Application, instance: ws.Instance) => {
         !!page ? parseInt(page) : undefined
       );
       res.send(workouts);
+    } catch (e) {
+      next(e);
+    }
+  });
+
+  app.get('/api/workout-instances/:name', async (req, res, next) => {
+    const name = req.params.name;
+    const { page } = req.query;
+    if (typeof name !== 'string') {
+      res.status(400).send();
+      return;
+    }
+    if (typeof page !== 'undefined') {
+      if (typeof page !== 'string' || isNaN(parseInt(page))) {
+        res.status(400).send();
+        return;
+      }
+    }
+    try {
+      const history = await getWorkoutInstancesByExerciseName(
+        res.locals.userId,
+        name,
+        !!page ? parseInt(page) : undefined
+      );
+      res.send(history);
     } catch (e) {
       next(e);
     }

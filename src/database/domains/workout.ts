@@ -13,6 +13,7 @@ import { getExerciseById, getExerciseByName } from './exercise';
 
 import { PipelineStage } from 'mongoose';
 import Workout from '../models/workout';
+import { buildGetExerciseHistoryById as buildGetWorkoutInstancesByExerciseNameQuery } from '../aggregations';
 import { getNextDaySchedule } from './schedule';
 import mongoose from 'mongoose';
 
@@ -93,14 +94,14 @@ export async function addCheckInToActiveExercise(userId: string) {
 export async function startWorkout(userId: string) {
   const { nickname, dayNumber, exercises } = await getNextDaySchedule(userId);
 
-  let exercisesMapped: IWorkoutExercise[] = exercises.map(
-    mapExerciseToInstance
-  );
-
   const alreadyInProgressWorkout = await Workout.findOne({
     userId,
     endedAt: undefined,
   });
+
+  let exercisesMapped: IWorkoutExercise[] = exercises.map(
+    mapExerciseToInstance
+  );
 
   if (!!alreadyInProgressWorkout) {
     return alreadyInProgressWorkout;
@@ -239,7 +240,7 @@ export function getMostRecentCompletedWorkout(userId: string) {
 
 function mapExerciseToInstance(exercise: IExercise): IWorkoutExercise {
   return {
-    exercise,
+    ...exercise,
     sets: new Array<IWorkoutExerciseSet>(exercise.setCount).fill({
       complete: false,
       timeInSeconds:
@@ -247,6 +248,7 @@ function mapExerciseToInstance(exercise: IExercise): IWorkoutExercise {
           ? exercise.timePerSetInSeconds
           : undefined,
     }),
+    performedAt: new Date(),
   };
 }
 
@@ -322,5 +324,15 @@ async function populateResistanceForNextSets(
           firstSetResistance,
       },
     }
+  );
+}
+
+export async function getWorkoutInstancesByExerciseName(
+  userId: string,
+  name: string,
+  page?: number
+) {
+  return Workout.aggregate<IWorkoutExercise>(
+    buildGetWorkoutInstancesByExerciseNameQuery(userId, name, page)
   );
 }

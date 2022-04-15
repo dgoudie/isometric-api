@@ -45,10 +45,8 @@ export function initExercise(app: express.Application) {
     }
     getExercises(
       res.locals.userId,
-      search,
-      muscleGroup as ExerciseMuscleGroup,
-      !!page ? parseInt(page) : undefined,
-      ids
+      { search, muscleGroup: muscleGroup as ExerciseMuscleGroup, ids },
+      !!page ? parseInt(page) : undefined
     )
       .then((exercises) => res.send(exercises))
       .catch((e) => next(e));

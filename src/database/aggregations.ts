@@ -43,42 +43,41 @@ export const buildNextDayScheduleAggregation = (nextDayNumber: number) => {
   return pipeline;
 };
 
-export const buildFindExercisesWithBasicHistoryQuery = (
-  userId: string,
-  $search?: string,
-  muscleGroup?: ExerciseMuscleGroup,
-  page?: number,
-  ids?: string[]
-) => {
-  let query: object = { userId: new mongoose.Types.ObjectId(userId) };
-  if (!!$search) {
-    $search = $search.replace(/(\w+)/g, '"$1"');
-    query = {
-      ...query,
-      $text: { $search },
-    };
-  }
-  if (!!muscleGroup) {
-    query = {
-      ...query,
-      $or: [
-        { primaryMuscleGroup: muscleGroup },
-        { secondaryMuscleGroups: muscleGroup },
-      ],
-    };
-  }
-  if (!!ids) {
-    query = {
-      ...query,
-      _id: {
-        $in: ids.map((id) => new mongoose.Types.ObjectId(id)),
-      },
-    };
-  }
-  let pipeline: PipelineStage[] = [
-    {
-      $match: query,
+export const joinInstancesToWorkout: PipelineStage = {
+  $lookup: {
+    from: 'workouts',
+    as: 'instances',
+    let: {
+      exerciseId: '$_id',
     },
+    pipeline: [
+      {
+        $unwind: {
+          path: '$exercises',
+        },
+      },
+      {
+        $match: {
+          $expr: {
+            $eq: ['$exercises.exercise._id', '$$exerciseId'],
+          },
+        },
+      },
+      {
+        $sort: {
+          createdAt: -1,
+        },
+      },
+    ],
+  },
+};
+
+export const buildFindExercisesWithBasicHistoryQuery = (
+  query: object,
+  page?: number
+) => {
+  let pipeline: PipelineStage[] = [
+    { $match: query },
     {
       $lookup: {
         from: 'workouts',
@@ -100,7 +99,7 @@ export const buildFindExercisesWithBasicHistoryQuery = (
                     },
                   },
                   {
-                    $eq: ['$exercises.exercise._id', '$$exercise_id'],
+                    $eq: ['$exercises._id', '$$exercise_id'],
                   },
                 ],
               },
@@ -110,9 +109,6 @@ export const buildFindExercisesWithBasicHistoryQuery = (
             $sort: {
               createdAt: -1,
             },
-          },
-          {
-            $limit: 20,
           },
           {
             $addFields: {
@@ -142,21 +138,13 @@ export const buildFindExercisesWithBasicHistoryQuery = (
       $unwind: {
         path: '$instances',
         preserveNullAndEmptyArrays: true,
+        includeArrayIndex: 'i',
       },
     },
     {
       $addFields: {
-        'instances.sets': '$instances.exercises.sets',
-        'instances.totalRepsForInstance':
-          '$instances.exercises.totalRepsForInstance',
+        instances: '$instances.exercises',
       },
-    },
-    {
-      $unset: [
-        'instances.dayNumber',
-        'instances.nickname',
-        'instances.exercises',
-      ],
     },
     {
       $addFields: {
@@ -180,7 +168,7 @@ export const buildFindExercisesWithBasicHistoryQuery = (
       $group: {
         _id: {
           exerciseId: '$_id',
-          instanceId: '$instances._id',
+          instanceId: '$i',
         },
         exerciseRoot: {
           $first: '$$ROOT',
@@ -245,9 +233,7 @@ export const buildFindExercisesWithBasicHistoryQuery = (
         'instances.bestSet': '$bestSet',
       },
     },
-    {
-      $unset: ['sets', 'bestSet'],
-    },
+    { $unset: ['sets', 'bestSet'] },
     {
       $sort: {
         'instances.personalBestSortableValue': -1,
@@ -306,115 +292,14 @@ export const buildFindExercisesWithBasicHistoryQuery = (
                 ],
               },
               lastPerformed: {
-                $max: '$instances.createdAt',
+                $max: '$instances.performedAt',
               },
             },
           ],
         },
       },
     },
-    {
-      $unwind: {
-        path: '$instances',
-        preserveNullAndEmptyArrays: true,
-      },
-    },
-    {
-      $unwind: {
-        path: '$instances.sets',
-        preserveNullAndEmptyArrays: true,
-      },
-    },
-    {
-      $sort: {
-        'instances.sets.setIndex': 1,
-      },
-    },
-    {
-      $group: {
-        _id: {
-          exerciseId: '$_id',
-          instanceId: '$instances._id',
-        },
-        _: {
-          $first: '$$ROOT',
-        },
-        sets: {
-          $push: '$instances.sets',
-        },
-      },
-    },
-    {
-      $replaceRoot: {
-        newRoot: {
-          $mergeObjects: [
-            '$_',
-            {
-              sets: '$sets',
-            },
-          ],
-        },
-      },
-    },
-    {
-      $addFields: {
-        'instances.sets': {
-          $cond: [
-            {
-              $gt: [
-                {
-                  $size: '$sets',
-                },
-                0,
-              ],
-            },
-            '$sets',
-            '$$REMOVE',
-          ],
-        },
-      },
-    },
-    {
-      $sort: {
-        'instances.createdAt': -1,
-      },
-    },
-    {
-      $group: {
-        _id: '$_id',
-        _: {
-          $first: '$$ROOT',
-        },
-        instances: {
-          $push: '$instances',
-        },
-      },
-    },
-    {
-      $replaceRoot: {
-        newRoot: {
-          $mergeObjects: [
-            '$_',
-            {
-              instances: {
-                $filter: {
-                  input: '$instances',
-                  as: 'instance',
-                  cond: {
-                    $not: {
-                      $not: '$$instance._id',
-                    },
-                  },
-                },
-              },
-            },
-          ],
-        },
-      },
-    },
-    {
-      $unset: 'sets',
-    },
+    { $unset: ['sets', 'instances'] },
     {
       $sort: {
         name: 1,
@@ -426,3 +311,64 @@ export const buildFindExercisesWithBasicHistoryQuery = (
   }
   return pipeline;
 };
+
+export function buildGetExerciseHistoryById(
+  userId: string,
+  name: string,
+  page?: number
+) {
+  let pipeline: PipelineStage[] = [
+    {
+      $unwind: {
+        path: '$exercises',
+      },
+    },
+    {
+      $match: {
+        'exercises.name': name,
+        userId: new mongoose.Types.ObjectId(userId),
+      },
+    },
+    {
+      $replaceRoot: {
+        newRoot: {
+          $mergeObjects: [
+            '$exercises',
+            {
+              sets: {
+                $filter: {
+                  input: '$exercises.sets',
+                  cond: {
+                    $eq: ['$$this.complete', true],
+                  },
+                },
+              },
+              performedAt: '$createdAt',
+            },
+          ],
+        },
+      },
+    },
+    {
+      $match: {
+        $expr: {
+          $gte: [
+            {
+              $size: '$sets',
+            },
+            1,
+          ],
+        },
+      },
+    },
+    {
+      $sort: {
+        performedAt: -1,
+      },
+    },
+  ];
+  if (typeof page !== 'undefined') {
+    pipeline = [...pipeline, { $skip: (page - 1) * 5 }, { $limit: 5 }];
+  }
+  return pipeline;
+}

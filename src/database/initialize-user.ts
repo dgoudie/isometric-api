@@ -22,7 +22,7 @@ const insertDefaultExercises = async (userId: string) => {
   await Exercise.insertMany(exercises);
 };
 
-const DEFAULT_EXERCISES: Omit<IExercise, 'userId' | '_id'>[] = [
+const DEFAULT_EXERCISES: Omit<IExercise, 'userId' | '_id' | 'createdAt'>[] = [
   {
     name: 'Barbell Bench Press',
     primaryMuscleGroup: 'chest',
