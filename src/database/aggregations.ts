@@ -162,6 +162,7 @@ export const buildFindExercisesWithBasicHistoryQuery = (
     {
       $sort: {
         'instances.personalBestSortableValue': -1,
+        'instances.performedAt': 1,
       },
     },
     {
@@ -237,6 +238,7 @@ export const buildFindExercisesWithBasicHistoryQuery = (
     {
       $sort: {
         'instances.personalBestSortableValue': -1,
+        'instances.performedAt': 1,
       },
     },
     {
