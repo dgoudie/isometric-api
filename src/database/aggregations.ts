@@ -151,7 +151,7 @@ export const buildFindExercisesWithBasicHistoryQuery = (
         'instances.personalBestSortableValue': {
           $cond: [
             {
-              $eq: ['$exercise.exerciseType', 'rep_based'],
+              $eq: ['$exerciseType', 'rep_based'],
             },
             '$instances.totalRepsForInstance',
             '$instances.sets.resistanceInPounds',
