@@ -321,6 +321,13 @@ export function buildGetExerciseHistoryById(
 ) {
   let pipeline: PipelineStage[] = [
     {
+      $match: {
+        endedAt: {
+          $exists: true,
+        },
+      },
+    },
+    {
       $unwind: {
         path: '$exercises',
       },
