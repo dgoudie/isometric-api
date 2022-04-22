@@ -11,6 +11,7 @@ import {
 } from 'date-fns';
 import { getExerciseById, getExerciseByName } from './exercise';
 
+import Exercise from '../models/exercise';
 import { PipelineStage } from 'mongoose';
 import Workout from '../models/workout';
 import { buildGetExerciseHistoryById as buildGetWorkoutInstancesByExerciseNameQuery } from '../aggregations';
@@ -332,7 +333,16 @@ export async function getWorkoutInstancesByExerciseName(
   name: string,
   page?: number
 ) {
+  const exercise = await Exercise.findOne({ name });
+  if (!exercise) {
+    throw new Error(`Exercise with name '${name}' not found.`);
+  }
   return Workout.aggregate<IWorkoutExercise>(
-    buildGetWorkoutInstancesByExerciseNameQuery(userId, name, page)
+    buildGetWorkoutInstancesByExerciseNameQuery(
+      userId,
+      exercise._id,
+      name,
+      page
+    )
   );
 }

@@ -104,6 +104,7 @@ export const buildFindExercisesWithBasicHistoryQuery = (
         as: 'instances',
         let: {
           exercise_id: '$_id',
+          exercise_name: '$name',
         },
         pipeline: [
           {
@@ -119,7 +120,10 @@ export const buildFindExercisesWithBasicHistoryQuery = (
                     },
                   },
                   {
-                    $eq: ['$exercises._id', '$$exercise_id'],
+                    $or: [
+                      { $eq: ['$exercises._id', '$$exercise_id'] },
+                      { $eq: ['$exercises.name', '$$exercise_name'] },
+                    ],
                   },
                 ],
               },
@@ -158,7 +162,6 @@ export const buildFindExercisesWithBasicHistoryQuery = (
       $unwind: {
         path: '$instances',
         preserveNullAndEmptyArrays: true,
-        includeArrayIndex: 'i',
       },
     },
     {
@@ -337,6 +340,7 @@ export const buildFindExercisesWithBasicHistoryQuery = (
 
 export function buildGetExerciseHistoryById(
   userId: string,
+  _id: string,
   name: string,
   page?: number
 ) {
@@ -355,8 +359,19 @@ export function buildGetExerciseHistoryById(
     },
     {
       $match: {
-        'exercises.name': name,
-        userId: new mongoose.Types.ObjectId(userId),
+        $expr: {
+          $and: [
+            {
+              $eq: ['$userId', new mongoose.Types.ObjectId(userId)],
+            },
+            {
+              $or: [
+                { $eq: ['$exercises.name', name] },
+                { $eq: ['$exercises._id', _id] },
+              ],
+            },
+          ],
+        },
       },
     },
     {

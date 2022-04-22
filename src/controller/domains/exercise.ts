@@ -5,6 +5,7 @@ import {
 import {
   getExerciseByName,
   getExercises,
+  saveExercise,
 } from '../../database/domains/exercise';
 
 import express from 'express';
@@ -76,6 +77,19 @@ export function initExercise(app: express.Application) {
       } else {
         res.send(exercise);
       }
+    } catch (e) {
+      next(e);
+    }
+  });
+
+  app.put('/api/exercise', async (req, res, next) => {
+    if (!req.body._id) {
+      res.status(400).send();
+      return;
+    }
+    try {
+      await saveExercise(res.locals.userId, req.body);
+      res.sendStatus(204);
     } catch (e) {
       next(e);
     }

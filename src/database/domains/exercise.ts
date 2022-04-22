@@ -74,3 +74,7 @@ export async function getExerciseByName(
   const [exercise] = await getExercises(userId, { name });
   return exercise;
 }
+
+export async function saveExercise(userId: string, exercise: IExercise) {
+  return Exercise.updateOne({ userId, _id: exercise._id }, exercise);
+}
