@@ -11,7 +11,16 @@ import express from 'express';
 
 export function initExercise(app: express.Application) {
   app.get('/api/exercises', (req, res, next) => {
-    let { search, muscleGroup, page, ids } = req.query;
+    let {
+      search,
+      muscleGroup,
+      page,
+      ids,
+      onlyPerformed: onlyPerformedFromQuery,
+      onlyNotPerformed: onlyNotPerformedFromQuery,
+    } = req.query;
+    const onlyPerformed = !!onlyPerformedFromQuery;
+    const onlyNotPerformed = !!onlyNotPerformedFromQuery;
     if (typeof search !== 'undefined') {
       if (typeof search !== 'string') {
         res.status(400).send();
@@ -45,7 +54,13 @@ export function initExercise(app: express.Application) {
     }
     getExercises(
       res.locals.userId,
-      { search, muscleGroup: muscleGroup as ExerciseMuscleGroup, ids },
+      {
+        search,
+        muscleGroup: muscleGroup as ExerciseMuscleGroup,
+        ids,
+        onlyNotPerformed,
+        onlyPerformed,
+      },
       !!page ? parseInt(page) : undefined
     )
       .then((exercises) => res.send(exercises))

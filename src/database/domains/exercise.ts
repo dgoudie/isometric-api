@@ -18,6 +18,8 @@ export function getExercises(
     muscleGroup?: ExerciseMuscleGroup;
     ids?: string[];
     name?: string;
+    onlyPerformed?: boolean;
+    onlyNotPerformed?: boolean;
   } = {},
   page?: number
 ) {
@@ -52,7 +54,12 @@ export function getExercises(
       name: options.name,
     };
   }
-  const pipeline = buildFindExercisesWithBasicHistoryQuery(query, page);
+  let pipeline = buildFindExercisesWithBasicHistoryQuery(
+    query,
+    options.onlyPerformed ?? false,
+    options.onlyNotPerformed ?? false,
+    page
+  );
   return Exercise.aggregate<IExerciseExtended>(pipeline);
 }
 export async function getExerciseById(userId: string, _id: string) {

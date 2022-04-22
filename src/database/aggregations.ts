@@ -74,8 +74,28 @@ export const joinInstancesToWorkout: PipelineStage = {
 
 export const buildFindExercisesWithBasicHistoryQuery = (
   query: object,
+  onlyPerformed: boolean,
+  onlyNotPerformed: boolean,
   page?: number
 ) => {
+  let filterByPerformedStage: PipelineStage[] = [];
+  if (onlyPerformed) {
+    filterByPerformedStage.push({
+      $match: {
+        $expr: {
+          $ne: ['$lastPerformed', null],
+        },
+      },
+    });
+  } else if (onlyNotPerformed) {
+    filterByPerformedStage.push({
+      $match: {
+        $expr: {
+          $eq: ['$lastPerformed', null],
+        },
+      },
+    });
+  }
   let pipeline: PipelineStage[] = [
     { $match: query },
     {
@@ -301,6 +321,7 @@ export const buildFindExercisesWithBasicHistoryQuery = (
         },
       },
     },
+    ...filterByPerformedStage,
     { $unset: ['sets', 'instances'] },
     {
       $sort: {
