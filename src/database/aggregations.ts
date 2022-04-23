@@ -363,7 +363,7 @@ export function buildGetExerciseHistoryById(
         $expr: {
           $and: [
             {
-              $eq: ['$userId', new mongoose.Types.ObjectId(userId)],
+              $eq: ['$userId', userId],
             },
             {
               $or: [

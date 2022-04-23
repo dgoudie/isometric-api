@@ -23,7 +23,7 @@ export function getExercises(
   } = {},
   page?: number
 ) {
-  let query: object = { userId: new mongoose.Types.ObjectId(userId) };
+  let query: object = { userId };
   if (!!options.search) {
     options.search = options.search.replace(/(\w+)/g, '"$1"');
     query = {

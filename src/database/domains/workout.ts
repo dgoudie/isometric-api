@@ -40,7 +40,7 @@ export async function getFullActiveWorkout(
   let pipeline: PipelineStage[] = [
     {
       $match: {
-        userId: new mongoose.Types.ObjectId(userId),
+        userId,
         endedAt: undefined,
       },
     },

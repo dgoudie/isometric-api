@@ -17,7 +17,7 @@ export const initializeUserDataIfNecessary = async (
 const insertDefaultExercises = async (userId: string) => {
   const exercises = DEFAULT_EXERCISES.map((exercise) => ({
     ...exercise,
-    userId: new mongoose.Types.ObjectId(userId),
+    userId,
   }));
   await Exercise.insertMany(exercises);
 };

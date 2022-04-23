@@ -5,7 +5,7 @@ import mongoose from 'mongoose';
 
 const workoutSchema = new Schema<IWorkout>(
   {
-    userId: mongoose.Types.ObjectId,
+    userId: String,
     endedAt: Date,
     dayNumber: Number,
     nickname: String,

@@ -33,7 +33,7 @@ const buildNextDayScheduleAggregation = (userId: string, dayNumber: number) => {
   pipeline = [
     {
       $match: {
-        userId: new mongoose.Types.ObjectId(userId),
+        userId,
       },
     },
     {
