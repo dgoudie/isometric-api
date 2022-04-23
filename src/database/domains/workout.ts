@@ -218,7 +218,32 @@ export async function endWorkout(userId: string) {
     },
     [
       {
-        $addFields: { endedAt: new Date(), durationInSeconds },
+        $addFields: {
+          endedAt: new Date(),
+          durationInSeconds,
+          exercises: {
+            $filter: {
+              input: '$exercises',
+              as: 'exercise',
+              cond: {
+                $gt: [
+                  {
+                    $size: {
+                      $filter: {
+                        input: '$$exercise.sets',
+                        as: 'set',
+                        cond: {
+                          $eq: ['$$set.complete', true],
+                        },
+                      },
+                    },
+                  },
+                  0,
+                ],
+              },
+            },
+          },
+        },
       },
       { $unset: 'checkIns' },
     ]
