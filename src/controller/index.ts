@@ -1,11 +1,10 @@
 import express, { CookieOptions } from 'express';
 
-import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import { getLogger } from 'log4js';
+import { getUserId } from '../utils/get-user-id';
 import { init as initController } from '../controller/controller';
 import { initializeUserDataIfNecessary } from '../database/initialize-user';
-import jwt from 'jsonwebtoken';
 import ws from 'express-ws';
 
 export const AUTH_TOKEN = 'Authorization';
@@ -38,19 +37,9 @@ function setupPreRequestMiddleware(app: express.Application) {
       // methods: ['GET', 'HEAD', 'PUT', 'POST', 'DELETE'],
     })
   );
-  app.use(cookieParser());
   app.use(express.json());
   app.use((req, res, next) => {
-    let userId: string | undefined;
-    if (process.env.NODE_ENV === 'development') {
-      userId = process.env.USER_ID;
-      if (!userId) {
-        throw new Error('process.env.USER_ID not populated');
-      }
-    } else {
-      userId = req.headers['x-forwarded-user'] as string;
-    }
-    res.locals.userId = userId;
+    res.locals.userId = getUserId(req);
     next();
   });
   app.use((req, res, next) => {
