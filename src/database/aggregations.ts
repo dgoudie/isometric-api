@@ -162,6 +162,7 @@ export const buildFindExercisesWithBasicHistoryQuery = (
       $unwind: {
         path: '$instances',
         preserveNullAndEmptyArrays: true,
+        includeArrayIndex: 'i',
       },
     },
     {
@@ -257,7 +258,7 @@ export const buildFindExercisesWithBasicHistoryQuery = (
         'instances.bestSet': '$bestSet',
       },
     },
-    { $unset: ['sets', 'bestSet'] },
+    { $unset: ['sets', 'bestSet', 'i'] },
     {
       $sort: {
         'instances.personalBestSortableValue': -1,
