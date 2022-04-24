@@ -1,7 +1,6 @@
 import Exercise from './models/exercise';
 import { IExercise } from '@dgoudie/isometric-types';
 import Settings from './models/settings';
-import mongoose from 'mongoose';
 
 export const initializeUserDataIfNecessary = async (
   userId: string

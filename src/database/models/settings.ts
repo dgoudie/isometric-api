@@ -5,7 +5,7 @@ import mongoose from 'mongoose';
 
 const settingsSchema = new Schema<ISettings>(
   {
-    userId: String,
+    userId: { type: String, required: true },
   },
   { timestamps: true }
 );
