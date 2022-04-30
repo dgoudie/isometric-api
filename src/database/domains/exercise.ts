@@ -76,5 +76,10 @@ export async function getExerciseByName(
 }
 
 export async function saveExercise(userId: string, exercise: IExercise) {
-  return Exercise.updateOne({ userId, _id: exercise._id }, exercise);
+  let exerciseInDatabase = await Exercise.findOne({
+    userId,
+    _id: exercise._id,
+  });
+  exerciseInDatabase?.overwrite(exercise);
+  return exerciseInDatabase?.save();
 }
