@@ -9,14 +9,13 @@ import {
   millisecondsToSeconds,
   minutesToMilliseconds,
 } from 'date-fns';
-import { getExerciseById, getExerciseByName } from './exercise';
 
 import Exercise from '../models/exercise';
 import { PipelineStage } from 'mongoose';
 import Workout from '../models/workout';
 import { buildGetExerciseHistoryById as buildGetWorkoutInstancesByExerciseNameQuery } from '../aggregations';
+import { getExerciseById } from './exercise';
 import { getNextDaySchedule } from './schedule';
-import mongoose from 'mongoose';
 
 export async function getCompletedWorkouts(userId: string, page?: number) {
   let query = Workout.find({ userId, endedAt: { $exists: true } }).sort({
@@ -187,6 +186,30 @@ export async function replaceExercise(
   await Workout.updateOne(
     { userId, endedAt: undefined },
     { [`exercises.${exerciseIndex}`]: workoutExerciseMapped }
+  );
+  return getMinifiedActiveWorkout(userId);
+}
+
+export async function addExercise(
+  userId: string,
+  exerciseId: string,
+  index: number
+) {
+  const newExercise = await getExerciseById(userId, exerciseId);
+  if (!newExercise) {
+    return;
+  }
+  const workoutExerciseMapped = mapExerciseToInstance(newExercise);
+  await Workout.updateOne(
+    { userId, endedAt: undefined },
+    {
+      $push: {
+        exercises: {
+          $each: [workoutExerciseMapped],
+          $position: index,
+        },
+      },
+    }
   );
   return getMinifiedActiveWorkout(userId);
 }
