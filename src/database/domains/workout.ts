@@ -214,6 +214,26 @@ export async function addExercise(
   return getMinifiedActiveWorkout(userId);
 }
 
+export async function deleteExercise(userId: string, index: number) {
+  const activeWorkout = await getFullActiveWorkout(userId);
+  if (!activeWorkout) {
+    return;
+  }
+  if (activeWorkout.exercises.length < 2) {
+    return null;
+  }
+  activeWorkout.exercises.splice(index, 1);
+  await Workout.updateOne(
+    { userId, endedAt: undefined },
+    {
+      $set: {
+        exercises: activeWorkout.exercises,
+      },
+    }
+  );
+  return getMinifiedActiveWorkout(userId);
+}
+
 export async function endWorkout(userId: string) {
   const activeWorkout = await getFullActiveWorkout(userId);
   if (!activeWorkout) {

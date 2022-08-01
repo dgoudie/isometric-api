@@ -2,6 +2,7 @@ import { IWorkout, WSWorkoutUpdate } from '@dgoudie/isometric-types';
 import {
   addCheckInToActiveExercise,
   addExercise,
+  deleteExercise,
   discardWorkout,
   endWorkout,
   getCompletedWorkouts,
@@ -135,6 +136,11 @@ const handleMessage = async (event: WebSocket.MessageEvent) => {
         eventPayload.exerciseId,
         eventPayload.index
       );
+      if (!!workout) {
+        broadcastWorkoutUpdate(userId, workout);
+      }
+    } else if (eventPayload.type === 'DELETE_EXERCISE') {
+      const workout = await deleteExercise(userId, eventPayload.index);
       if (!!workout) {
         broadcastWorkoutUpdate(userId, workout);
       }
