@@ -355,45 +355,40 @@ async function populateResistanceForNextSets(
   exerciseIndex: number,
   setIndex: number
 ) {
-  if (setIndex !== 0) {
-    return;
-  }
   let activeWorkout = await getFullActiveWorkout(userId);
   if (!activeWorkout) {
     return;
   }
   let exerciseAtIndex = activeWorkout.exercises[exerciseIndex];
-  let anyOtherExercisesAlreadyHaveResistanceSet = !exerciseAtIndex.sets
-    .slice(1)
-    .every((set) => typeof set.resistanceInPounds === 'undefined');
-  if (anyOtherExercisesAlreadyHaveResistanceSet) {
+  if (setIndex >= exerciseAtIndex.sets.length - 1) {
     return;
   }
-  if (exerciseAtIndex.sets.length < 2) {
+  const set = exerciseAtIndex.sets[setIndex];
+  if (set.complete) {
     return;
   }
-  const firstSetResistance = exerciseAtIndex.sets[0].resistanceInPounds;
-  const everyOtherSetResistanceIsUndefined = exerciseAtIndex.sets
-    .slice(1)
-    .every((set) => typeof set.resistanceInPounds === 'undefined');
-  if (
-    typeof firstSetResistance === 'undefined' ||
-    !everyOtherSetResistanceIsUndefined
-  ) {
-    return;
-  }
-  await Workout.updateOne(
-    {
-      userId,
-      endedAt: undefined,
-    },
-    {
-      $set: {
-        [`exercises.${exerciseIndex}.sets.$[].resistanceInPounds`]:
-          firstSetResistance,
-      },
+  const setResistancePersisted = set.resistanceInPounds;
+  let promises: ReturnType<typeof Workout.updateOne>[] = [];
+  exerciseAtIndex.sets.slice(setIndex).forEach((set, index) => {
+    if (typeof set.repetitions === 'undefined' && !set.complete) {
+      promises.push(
+        Workout.updateOne(
+          {
+            userId,
+            endedAt: undefined,
+          },
+          {
+            $set: {
+              [`exercises.${exerciseIndex}.sets.${
+                setIndex + index
+              }.resistanceInPounds`]: setResistancePersisted,
+            },
+          }
+        )
+      );
     }
-  );
+  });
+  await Promise.all(promises);
 }
 
 export async function getWorkoutInstancesByExerciseName(
