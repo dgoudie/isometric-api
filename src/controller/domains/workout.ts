@@ -6,7 +6,6 @@ import {
   discardWorkout,
   endWorkout,
   getCompletedWorkouts,
-  getFullActiveWorkout,
   getMinifiedActiveWorkout,
   getWorkoutInstancesByExerciseName,
   persistSetComplete,
@@ -14,11 +13,11 @@ import {
   persistSetResistance,
   replaceExercise,
   startWorkout,
-} from '../../database/domains/workout';
+} from '../../database/domains/workout.js';
 
 import WebSocket from 'ws';
-import { getLogger } from 'log4js';
-import { getUserId } from '../../utils/get-user-id';
+import { getUserId } from '../../utils/get-user-id.js';
+import log4js from 'log4js';
 import ws from 'express-ws';
 
 let wsInstance: ws.Instance;
@@ -146,7 +145,7 @@ const handleMessage = async (event: WebSocket.MessageEvent) => {
       }
     }
   } catch (e) {
-    getLogger().error(e);
+    log4js.getLogger().error(e);
   }
 };
 

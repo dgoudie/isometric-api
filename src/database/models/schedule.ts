@@ -1,9 +1,7 @@
-import { Model, Schema } from 'mongoose';
-
 import { ISchedule } from '@dgoudie/isometric-types';
 import mongoose from 'mongoose';
 
-const scheduleSchema = new Schema<ISchedule>(
+const scheduleSchema = new mongoose.Schema<ISchedule>(
   {
     userId: String,
     days: [

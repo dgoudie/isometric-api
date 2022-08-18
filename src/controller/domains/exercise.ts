@@ -6,7 +6,7 @@ import {
   getExerciseByName,
   getExercises,
   saveExercise,
-} from '../../database/domains/exercise';
+} from '../../database/domains/exercise.js';
 
 import express from 'express';
 

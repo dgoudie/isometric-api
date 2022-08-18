@@ -1,8 +1,7 @@
-import express from 'express';
-import { initExercise } from './domains/exercise';
-import { initSchedule } from './domains/schedule';
-import { initSettings } from './domains/settings';
-import { initWorkout } from './domains/workout';
+import { initExercise } from './domains/exercise.js';
+import { initSchedule } from './domains/schedule.js';
+import { initSettings } from './domains/settings.js';
+import { initWorkout } from './domains/workout.js';
 import ws from 'express-ws';
 
 export function init(app: ws.Application, instance: ws.Instance) {

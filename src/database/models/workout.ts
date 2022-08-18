@@ -1,9 +1,8 @@
 import { ISettings, IWorkout } from '@dgoudie/isometric-types';
-import { Model, Schema } from 'mongoose';
 
 import mongoose from 'mongoose';
 
-const workoutSchema = new Schema<IWorkout>(
+const workoutSchema = new mongoose.Schema<IWorkout>(
   {
     userId: String,
     endedAt: Date,

@@ -1,8 +1,8 @@
 import { ISchedule, IScheduleDayWithExercises } from '@dgoudie/isometric-types';
 import mongoose, { PipelineStage } from 'mongoose';
 
-import Schedule from '../models/schedule';
-import { getMostRecentCompletedWorkout } from './workout';
+import Schedule from '../models/schedule.js';
+import { getMostRecentCompletedWorkout } from './workout.js';
 
 export function getSchedule(userId: string) {
   return Schedule.findOne({ userId });

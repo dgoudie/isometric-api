@@ -1,6 +1,6 @@
-import Exercise from './models/exercise';
+import Exercise from './models/exercise.js';
 import { IExercise } from '@dgoudie/isometric-types';
-import Settings from './models/settings';
+import Settings from './models/settings.js';
 
 export const initializeUserDataIfNecessary = async (
   userId: string

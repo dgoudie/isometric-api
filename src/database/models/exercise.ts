@@ -1,8 +1,7 @@
-import mongoose, { Model, Schema } from 'mongoose';
-
 import { IExercise } from '@dgoudie/isometric-types';
+import mongoose from 'mongoose';
 
-const exerciseSchema = new Schema<IExercise>(
+const exerciseSchema = new mongoose.Schema<IExercise>(
   {
     userId: String,
     name: String,

@@ -3,12 +3,9 @@ import {
   IExercise,
   IExerciseExtended,
 } from '@dgoudie/isometric-types';
-import {
-  buildFindExercisesWithBasicHistoryQuery,
-  joinInstancesToWorkout,
-} from '../aggregations';
 
-import Exercise from '../models/exercise';
+import Exercise from '../models/exercise.js';
+import { buildFindExercisesWithBasicHistoryQuery } from '../aggregations.js';
 import mongoose from 'mongoose';
 
 export function getExercises(

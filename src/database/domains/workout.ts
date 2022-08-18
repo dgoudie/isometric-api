@@ -10,12 +10,12 @@ import {
   minutesToMilliseconds,
 } from 'date-fns';
 
-import Exercise from '../models/exercise';
+import Exercise from '../models/exercise.js';
 import { PipelineStage } from 'mongoose';
-import Workout from '../models/workout';
-import { buildGetExerciseHistoryById as buildGetWorkoutInstancesByExerciseNameQuery } from '../aggregations';
-import { getExerciseById } from './exercise';
-import { getNextDaySchedule } from './schedule';
+import Workout from '../models/workout.js';
+import { buildGetExerciseHistoryById as buildGetWorkoutInstancesByExerciseNameQuery } from '../aggregations.js';
+import { getExerciseById } from './exercise.js';
+import { getNextDaySchedule } from './schedule.js';
 
 export async function getCompletedWorkouts(userId: string, page?: number) {
   let query = Workout.find({ userId, endedAt: { $exists: true } }).sort({

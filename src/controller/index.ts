@@ -1,10 +1,10 @@
 import express, { CookieOptions } from 'express';
 
 import cors from 'cors';
-import { getLogger } from 'log4js';
-import { getUserId } from '../utils/get-user-id';
-import { init as initController } from '../controller/controller';
-import { initializeUserDataIfNecessary } from '../database/initialize-user';
+import { getUserId } from '../utils/get-user-id.js';
+import { init as initController } from './controller.js';
+import { initializeUserDataIfNecessary } from '../database/initialize-user.js';
+import log4js from 'log4js';
 import ws from 'express-ws';
 
 export const AUTH_TOKEN = 'Authorization';
@@ -25,7 +25,7 @@ export function init() {
   initController(app, wsInstance);
 
   app.listen(process.env.SERVER_PORT, () =>
-    getLogger().info(`listening on ${process.env.SERVER_PORT}`)
+    log4js.getLogger().info(`listening on ${process.env.SERVER_PORT}`)
   );
 }
 
@@ -44,7 +44,7 @@ function setupPreRequestMiddleware(app: express.Application) {
   });
   app.use((req, res, next) => {
     if (req.method !== 'GET') {
-      const logger = getLogger();
+      const logger = log4js.getLogger();
       logger.addContext('user_id', res.locals.userId);
       logger.addContext('http_client_ip_address', req.ip);
       Object.entries(req.headers).forEach(([key, value]) =>
